@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earl Kendrick · Performance Dashboard · NXRD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0b;--surface:#141417;--surface-2:#1a1a1e;--surface-3:#212127;
+    --border:rgba(255,255,255,0.07);--border-strong:rgba(255,255,255,0.12);
+    --accent:#c9f73d;--accent-soft:rgba(201,247,61,0.12);
+    --text:#f4f4f5;--muted:#8b8b92;--muted-2:#5f5f66;
+    --red:#ff5c52;--amber:#f5a623;--green:#c9f73d;
+    --display:"Space Grotesk",sans-serif;--body:"Inter",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased;line-height:1.5;padding-bottom:80px}
+  ::selection{background:var(--accent);color:#0a0a0b}
+  .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 40px;background:rgba(10,10,11,0.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-mark{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#0a0a0b;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-0.5px}
+  .brand-name{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-0.3px}
+  .brand-sub{font-size:11px;color:var(--muted);letter-spacing:0.04em}
+  .nav{display:flex;gap:4px}
+  .nav a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;transition:.18s}
+  .nav a:hover{color:var(--text);background:var(--surface-2)}
+  .topbar-right{display:flex;align-items:center;gap:16px}
+  .save-state{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);letter-spacing:0.04em}
+  .save-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .save-dot.saving{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+  .save-dot.offline{background:var(--muted-2);box-shadow:none}
+  .btn-primary{background:var(--accent);color:#0a0a0b;border:none;font-family:var(--display);font-weight:700;font-size:14px;padding:11px 22px;border-radius:999px;cursor:pointer;transition:.18s}
+  .btn-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+  section{scroll-margin-top:84px}
+  .section-head{margin:54px 0 22px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)}
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--accent)}
+  h1{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:-1px;line-height:1.05}
+  h2{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-0.6px;margin-top:6px}
+  .lead{color:var(--muted);font-size:15px;max-width:680px;margin-top:8px}
+  .focus{margin-top:30px;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:radial-gradient(120% 140% at 92% 0%,rgba(201,247,61,0.10),transparent 55%),var(--surface)}
+  .focus-top{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;padding:28px 30px}
+  .focus-label{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)}
+  .focus-theme{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-0.8px;margin-top:8px;line-height:1.1}
+  .focus-theme span{color:var(--accent)}
+  .focus-meta{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .chip{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:6px 13px}
+  .chip strong{color:var(--text);font-weight:600}
+  .focus-window{text-align:right;min-width:180px}
+  .window-pill{display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px;background:var(--accent-soft);border:1px solid rgba(201,247,61,0.25);border-radius:14px;padding:12px 18px}
+  .window-pill .k{font-size:11px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase}
+  .window-pill .v{font-family:var(--display);font-weight:700;font-size:22px}
+  .rail{display:flex;border-top:1px solid var(--border);overflow-x:auto}
+  .rail-item{flex:1 0 auto;min-width:150px;padding:16px 18px;border-right:1px solid var(--border);position:relative}
+  .rail-item:last-child{border-right:none}
+  .rail-item .mo{font-size:11px;color:var(--muted-2);letter-spacing:0.08em}
+  .rail-item .nm{font-size:13px;font-weight:600;margin-top:3px;line-height:1.3}
+  .rail-item.active{background:var(--accent-soft)}
+  .rail-item.active .nm{color:var(--accent)}
+  .rail-item.active::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)}
+  .group-label{font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin:34px 0 14px;display:flex;align-items:center;gap:14px}
+  .group-label::after{content:"";flex:1;height:1px;background:var(--border)}
+  .grid{display:grid;gap:16px}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;transition:.18s}
+  .kpi:hover{border-color:var(--border-strong)}
+  .kpi-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .kpi-name{font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);line-height:1.4}
+  .kpi-edit{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:4px 10px;cursor:pointer;background:transparent;transition:.15s;flex-shrink:0}
+  .kpi-edit:hover{color:var(--text);border-color:var(--border-strong)}
+  .kpi-body{display:flex;align-items:center;gap:18px;margin-top:18px}
+  .ring{position:relative;width:62px;height:62px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .pct{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:700;font-family:var(--display)}
+  .kpi-val{font-family:var(--display);font-weight:700;font-size:32px;line-height:1;letter-spacing:-1px}
+  .kpi-target{font-size:12px;color:var(--muted);margin-top:6px}
+  .kpi-target b{color:var(--text);font-weight:600}
+  .kpi-editor{margin-top:18px}
+  .kpi-editor label{display:block;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .kpi-editor .row{display:flex;gap:10px}
+  .kpi-editor .field{flex:1}
+  .kpi-editor input{width:100%;background:var(--surface-3);border:1px solid var(--border-strong);border-radius:8px;color:var(--text);font-family:var(--display);font-weight:600;font-size:15px;padding:9px 11px}
+  .kpi-editor input:focus{outline:none;border-color:var(--accent)}
+  .kpi-editor .btns{display:flex;gap:8px;margin-top:12px}
+  .btn-sm{font-family:var(--display);font-weight:600;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface-3);color:var(--text);transition:.15s}
+  .btn-sm.save{background:var(--accent);color:#0a0a0b;border-color:var(--accent)}
+  .btn-sm:hover{filter:brightness(1.08)}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+  .panel-title{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-0.3px}
+  .panel-note{font-size:12px;color:var(--muted)}
+  .li-layout{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+  .chart-meta{display:flex;gap:26px;margin:18px 0 6px}
+  .chart-stat .v{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-0.5px}
+  .chart-stat .v .up{color:var(--accent);font-size:14px;margin-left:6px}
+  .chart-stat .l{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px}
+  .chart-wrap{margin-top:10px}
+  .x-axis{display:flex;justify-content:space-between;margin-top:8px}
+  .x-axis span{font-size:11px;color:var(--muted-2)}
+  .gauge-box{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
+  .gauge{position:relative;width:150px;height:150px}
+  .gauge .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .gauge .big{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:-1px}
+  .gauge .lbl{font-size:11px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase}
+  .bench{font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
+  .bench b{color:var(--accent)}
+  .split{margin-top:4px}
+  .split-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
+  .split-row:last-child{border-bottom:none}
+  .split-bar{flex:1;height:7px;border-radius:4px;background:var(--surface-3);overflow:hidden}
+  .split-bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+  .split-name{font-size:13px;width:150px;color:var(--text)}
+  .split-val{font-size:13px;font-weight:600;width:78px;text-align:right;font-family:var(--display)}
+  .mail-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .mail{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:.18s}
+  .mail:hover{border-color:var(--border-strong)}
+  .mail-wk{width:54px;text-align:center;flex-shrink:0}
+  .mail-wk .m{font-size:10px;color:var(--muted-2);letter-spacing:0.08em;text-transform:uppercase}
+  .mail-wk .w{font-family:var(--display);font-weight:700;font-size:20px;line-height:1}
+  .mail-info .t{font-size:14px;font-weight:600}
+  .mail-info .d{font-size:12px;color:var(--muted);margin-top:3px}
+  .mail-info .cta{display:inline-block;margin-top:7px;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 9px;letter-spacing:0.03em}
+  .mail-act{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .status{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:5px 11px;border-radius:999px}
+  .status.pending{color:var(--amber);background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.25)}
+  .status.approved{color:var(--accent);background:var(--accent-soft);border:1px solid rgba(201,247,61,0.3)}
+  .btn-approve{font-family:var(--display);font-weight:600;font-size:13px;background:var(--surface-3);color:var(--text);border:1px solid var(--border-strong);padding:9px 18px;border-radius:9px;cursor:pointer;transition:.16s}
+  .btn-approve:hover{background:var(--accent);color:#0a0a0b;border-color:var(--accent)}
+  .mail.is-approved{border-color:rgba(201,247,61,0.3)}
+  .mail.is-approved .btn-approve{display:none}
+  .mail-summary{display:flex;gap:24px;align-items:center;margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+  .mail-summary .s .v{font-family:var(--display);font-weight:700;font-size:22px}
+  .mail-summary .s .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
+  .progress-track{flex:1;height:8px;background:var(--surface-3);border-radius:5px;overflow:hidden}
+  .progress-track i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s ease}
+  .seo-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+  .kw-table{width:100%;border-collapse:collapse}
+  .kw-table th{text-align:left;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted-2);font-weight:600;padding:0 0 12px;border-bottom:1px solid var(--border)}
+  .kw-table th.r,.kw-table td.r{text-align:right}
+  .kw-table td{padding:13px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .kw-table tr:last-child td{border-bottom:none}
+  .kw-term{font-weight:600}
+  .kw-theme{font-size:11px;color:var(--muted);margin-top:2px}
+  .vol{font-family:var(--display);font-weight:600}
+  .diff{display:inline-block;width:54px;text-align:center;font-size:11px;font-weight:600;padding:3px 0;border-radius:6px}
+  .diff.low{color:var(--accent);background:var(--accent-soft)}
+  .diff.med{color:var(--amber);background:rgba(245,166,35,0.12)}
+  .diff.high{color:var(--red);background:rgba(255,92,82,0.12)}
+  .rec-list{display:flex;flex-direction:column;gap:12px}
+  .rec{display:flex;gap:13px;align-items:flex-start}
+  .rec .num{font-family:var(--display);font-weight:700;font-size:13px;color:var(--accent);width:26px;height:26px;border-radius:7px;background:var(--accent-soft);display:grid;place-items:center;flex-shrink:0}
+  .rec .tx{font-size:13px;color:var(--text)}
+  .rec .tx span{color:var(--muted);display:block;margin-top:2px;font-size:12px}
+  footer{max-width:1320px;margin:70px auto 0;padding:26px 40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;color:var(--muted-2);font-size:12px}
+  footer b{color:var(--muted);font-weight:500}
+  @media(max-width:980px){.topbar{padding:14px 20px}.wrap{padding:0 20px}.nav{display:none}.li-layout,.seo-layout{grid-template-columns:1fr}.grid.cols-4{grid-template-columns:repeat(2,1fr)}.grid.cols-3{grid-template-columns:1fr}h1{font-size:27px}}
+  @media(max-width:560px){.grid.cols-2,.grid.cols-4{grid-template-columns:1fr}.mail{grid-template-columns:auto 1fr;gap:12px}.mail-act{grid-column:1/-1;justify-content:flex-end}.focus-window{text-align:left}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">EK</div>
+    <div><div class="brand-name">Earl Kendrick</div><div class="brand-sub">Performance dashboard</div></div>
+  </div>
+  <nav class="nav">
+    <a href="#kpis">Deliverables</a>
+    <a href="#linkedin">LinkedIn</a>
+    <a href="#email">Email approvals</a>
+    <a href="#seo">SEO</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="save-state"><span class="save-dot" id="save-dot"></span><span id="save-text">Saved</span></span>
+    <button class="btn-primary" onclick="generateReport(this)">Generate report</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <section id="focus">
+    <div class="section-head">
+      <span class="eyebrow">Live programme status</span>
+      <h1>Content and marketing performance</h1>
+      <p class="lead">Two month theme cycle, commercial audience focus. Paid LinkedIn plus LTA Google Ads. High level facts, KPI tracking, content approvals and SEO direction in one view.</p>
+    </div>
+    <div class="focus">
+      <div class="focus-top">
+        <div>
+          <div class="focus-label">Current theme · what we are working on</div>
+          <div class="focus-theme">Project and Cost Consultancy <span>CAPEX</span></div>
+          <div class="focus-meta">
+            <span class="chip"><strong>Services:</strong> Project Management, Cost Management, Development Monitoring</span>
+            <span class="chip"><strong>Audience:</strong> Developers, fund managers, BTR, asset managers</span>
+            <span class="chip"><strong>Voice:</strong> Consultative, we work alongside your team</span>
+          </div>
+        </div>
+        <div class="focus-window">
+          <div class="window-pill"><span class="k">Theme window</span><span class="v">Months 1 to 2</span></div>
+        </div>
+      </div>
+      <div class="rail">
+        <div class="rail-item active"><div class="mo">Months 1 to 2</div><div class="nm">Project and Cost Consultancy</div></div>
+        <div class="rail-item"><div class="mo">Months 3 to 4</div><div class="nm">Building Safety Act and Fire</div></div>
+        <div class="rail-item"><div class="mo">Months 5 to 6</div><div class="nm">Surveying and Technical DD</div></div>
+        <div class="rail-item"><div class="mo">Months 7 to 8</div><div class="nm">Interior and Architectural plus LTA</div></div>
+        <div class="rail-item"><div class="mo">Months 9 to 10</div><div class="nm">Dilapidations and Lease Advisory</div></div>
+        <div class="rail-item"><div class="mo">Months 11 to 12</div><div class="nm">Heritage and Conservation</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kpis">
+    <div class="section-head">
+      <span class="eyebrow">Key deliverables</span>
+      <h2>Headline three month targets</h2>
+      <p class="lead">Current figure against target for each metric. Red is below target, amber is within reach, green is target hit. Edit any figure and it saves across the dashboard.</p>
+    </div>
+    <div class="group-label">Pipeline and enquiries</div>
+    <div class="grid cols-3" id="grid-pipeline"></div>
+    <div class="group-label">LinkedIn · three month average</div>
+    <div class="grid cols-2" id="grid-linkedin"></div>
+    <div class="group-label">Email performance · per theme</div>
+    <div class="grid cols-2" id="grid-email"></div>
+    <div class="group-label">AI visibility and content output</div>
+    <div class="grid cols-4" id="grid-content"></div>
+  </section>
+
+  <section id="linkedin">
+    <div class="section-head">
+      <span class="eyebrow">Channel deep dive</span>
+      <h2>LinkedIn growth and engagement</h2>
+    </div>
+    <div class="li-layout">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Follower growth</div><div class="panel-note">3 posts per week plus GBP 1,000 paid</div></div>
+        <div class="chart-meta">
+          <div class="chart-stat"><div class="v">3,500</div><div class="l">Baseline</div></div>
+          <div class="chart-stat"><div class="v">4,500 <span class="up">+28.6%</span></div><div class="l">Month 3 target</div></div>
+          <div class="chart-stat"><div class="v">4.0%</div><div class="l">Engagement target</div></div>
+        </div>
+        <div class="chart-wrap" id="li-chart"></div>
+        <div class="x-axis"><span>Baseline</span><span>Month 1</span><span>Month 2</span><span>Month 3</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Engagement rate</div></div>
+        <div class="gauge-box">
+          <div class="gauge" id="li-gauge"></div>
+          <div class="bench">Sector specificity pushes above the <b>2 to 3%</b> B2B benchmark</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><div class="panel-title">Paid budget split · GBP 1,000 per month</div><div class="panel-note">CAPEX theme · Months 1 to 2</div></div>
+      <div class="split">
+        <div class="split-row"><div class="split-name">Boost best posts</div><div class="split-bar"><i style="width:40%"></i></div><div class="split-val">GBP 400</div></div>
+        <div class="split-row"><div class="split-name">CAPEX lead magnet</div><div class="split-bar"><i style="width:35%"></i></div><div class="split-val">GBP 350</div></div>
+        <div class="split-row"><div class="split-name">Brand and services</div><div class="split-bar"><i style="width:20%"></i></div><div class="split-val">GBP 200</div></div>
+        <div class="split-row"><div class="split-name">Test and learn pot</div><div class="split-bar"><i style="width:5%"></i></div><div class="split-val">GBP 50</div></div>
+      </div>
+      <div class="mail-summary" style="border-top:none;padding-top:18px">
+        <div class="s"><div class="v">50,000</div><div class="l">Paid impressions per cycle</div></div>
+        <div class="s"><div class="v">80</div><div class="l">Lead magnet downloads</div></div>
+        <div class="s"><div class="v">GBP 8.75</div><div class="l">Cost per lead</div></div>
+        <div class="s"><div class="v">6</div><div class="l">Direct enquiries</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="email">
+    <div class="section-head">
+      <span class="eyebrow">Awaiting sign off</span>
+      <h2>Email marketing plan · CAPEX theme</h2>
+      <p class="lead">Eight sends across the two month cycle, one per week. Educational in month 1, conversion in month 2. Approve each send to release it to the build queue. Approvals save automatically.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">Sends to approve</div><div class="panel-note" id="approve-note">0 of 8 approved</div></div>
+      <div class="mail-list" id="mail-list"></div>
+      <div class="mail-summary">
+        <div class="s"><div class="v" id="approved-count">0</div><div class="l">Approved</div></div>
+        <div class="progress-track"><i id="approve-bar"></i></div>
+        <div class="s" style="text-align:right"><div class="v">8</div><div class="l">Total sends</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="seo">
+    <div class="section-head">
+      <span class="eyebrow">Search and answer engines</span>
+      <h2>SEO and AEO suggestions</h2>
+      <p class="lead">Priority keyword targets mapped to the active theme cycle, plus on page actions to compound topical authority across the two month windows.</p>
+    </div>
+    <div class="seo-layout">
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Priority keyword targets</div></div>
+        <table class="kw-table"><thead><tr><th>Term</th><th class="r">Monthly volume</th><th class="r">Difficulty</th></tr></thead><tbody id="kw-body"></tbody></table>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">On page actions</div></div>
+        <div class="rec-list" id="rec-list"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div>Earl Kendrick Content and Marketing Plan v2 · <b>Two month theme cycle</b> · Commercial audience focus</div>
+  <div>Built and managed by <b>NXRD</b></div>
+</footer>
+
+<script>
+/* ---------------- data ---------------- */
+const KPI = {
+  pipeline:[
+    {id:"enquiries",name:"Inbound enquiries per month",cur:4,tgt:8,fmt:n=>n},
+    {id:"lta-enquiries",name:"LTA enquiries from Google Ads",cur:0,tgt:7,fmt:n=>n},
+    {id:"attribution",name:"Source attribution coverage",cur:0,tgt:80,fmt:n=>n+"%"},
+  ],
+  linkedin:[
+    {id:"followers",name:"LinkedIn followers",cur:3500,tgt:4500,fmt:n=>Number(n).toLocaleString()},
+    {id:"engagement",name:"LinkedIn engagement rate",cur:2.5,tgt:4,fmt:n=>n+"%"},
+  ],
+  email:[
+    {id:"open-rate",name:"Email open rate",cur:21,tgt:30,fmt:n=>n+"%"},
+    {id:"ctr",name:"Email click through rate",cur:2.3,tgt:4,fmt:n=>n+"%"},
+  ],
+  content:[
+    {id:"blogs",name:"Blogs posted per theme",cur:0,tgt:8,fmt:n=>n},
+    {id:"case-studies",name:"Case studies per theme",cur:0,tgt:6,fmt:n=>n},
+    {id:"ai-impressions",name:"AI search impressions",cur:0,tgt:5000,fmt:n=>Number(n).toLocaleString()},
+    {id:"llm-awareness",name:"LLM brand awareness · out of 10",cur:0,tgt:6,fmt:n=>n},
+  ]
+};
+const GROUPS=[["grid-pipeline","pipeline"],["grid-linkedin","linkedin"],["grid-email","email"],["grid-content","content"]];
+function allKpis(){return [].concat(KPI.pipeline,KPI.linkedin,KPI.email,KPI.content)}
+function findKpi(id){return allKpis().find(k=>k.id===id)}
+
+const EMAILS=[
+  {wk:"M1 W1",t:"Theme introduction",d:"Set up the CAPEX theme, educational tone",cta:"Read the blog or download the guide"},
+  {wk:"M1 W2",t:"Education",d:"Practical knowledge transfer, plain English",cta:"Read the blog"},
+  {wk:"M1 W3",t:"Director insight",d:"Build trust through expert voice, partnership tone",cta:"Speak to the team"},
+  {wk:"M1 W4",t:"Case study teaser",d:"Bridge to month 2 conversion content, outcome led",cta:"Read the case study"},
+  {wk:"M2 W1",t:"Full case study",d:"Demonstrate capability and outcomes, lead with the result",cta:"Read the full case study"},
+  {wk:"M2 W2",t:"Service overview",d:"Position EK clearly within the theme",cta:"Book a consultation"},
+  {wk:"M2 W3",t:"Risk and consequence",d:"Urgency without scaremongering, what if you do nothing",cta:"Speak to the team"},
+  {wk:"M2 W4",t:"Theme roundup and direct CTA",d:"Convert the warmed audience, clearest call to action",cta:"Book a call this week"},
+];
+const KEYWORDS=[
+  {term:"capex planning commercial property",theme:"CAPEX · active",vol:"720",diff:"low"},
+  {term:"development monitoring surveyor",theme:"CAPEX · active",vol:"480",diff:"low"},
+  {term:"licence to alter surveyor london",theme:"LTA · standalone",vol:"1,300",diff:"med"},
+  {term:"building safety act compliance",theme:"BSA · months 3 to 4",vol:"2,400",diff:"high"},
+  {term:"technical due diligence property",theme:"Surveying · months 5 to 6",vol:"880",diff:"med"},
+  {term:"reinstatement cost assessment",theme:"RCA · standalone",vol:"1,100",diff:"med"},
+  {term:"commercial dilapidations advice",theme:"Dilaps · months 9 to 10",vol:"590",diff:"low"},
+];
+const RECS=[
+  {t:"Build the CAPEX pillar page",d:"One authority page targeting capex planning, with the lead magnet embedded. Internally link all 8 theme blogs to it."},
+  {t:"Ship the LTA landing page",d:"earlkendrick.com/licence-to-alter, sub 2 second load, mobile first, every form and call tracked as a Google Ads conversion."},
+  {t:"Answer the questions LLMs cite",d:"Add a clear FAQ block per theme in plain question format so answer engines can lift EK as the source."},
+  {t:"Structure case studies for retrieval",d:"Lead each with the outcome, name the sector and service, add schema markup so they surface in AI summaries."},
+  {t:"Set source attribution",d:"Mandatory hidden UTM field plus dropdown on every enquiry form. Target 80% coverage by month 3."},
+];
+
+/* ---------------- state / persistence ---------------- */
+let approved=new Set();
+let editingId=null;
+let online=true;
+
+function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function setSave(s){
+  const dot=document.getElementById('save-dot'),tx=document.getElementById('save-text');
+  dot.className='save-dot'+(s==='saving'?' saving':s==='offline'?' offline':'');
+  tx.textContent=s==='saving'?'Saving':s==='offline'?'Local only':'Saved';
+}
+
+async function loadState(){
+  try{
+    const r=await fetch('/api/state');
+    if(!r.ok) throw new Error();
+    const s=await r.json();
+    if(s.kpis){for(const id in s.kpis){const k=findKpi(id);if(k){if(s.kpis[id].cur!=null)k.cur=s.kpis[id].cur;if(s.kpis[id].tgt!=null)k.tgt=s.kpis[id].tgt;}}}
+    if(Array.isArray(s.approved))approved=new Set(s.approved);
+    online=true;setSave('saved');
+  }catch(e){online=false;setSave('offline');}
+}
+function buildPayload(){
+  const kpis={};
+  allKpis().forEach(k=>kpis[k.id]={cur:k.cur,tgt:k.tgt});
+  return {kpis,approved:[...approved]};
+}
+async function persist(){
+  if(!online){setSave('offline');return;}
+  setSave('saving');
+  try{
+    const r=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildPayload())});
+    if(!r.ok)throw new Error();
+    setSave('saved');
+  }catch(e){online=false;setSave('offline');}
+}
+
+/* ---------------- KPI render ---------------- */
+function statusColor(cur,tgt){const p=tgt==0?1:cur/tgt;if(p>=1)return getCss('--green');if(p>=0.85)return getCss('--amber');return getCss('--red')}
+function ring(cur,tgt){
+  const p=tgt==0?0:Math.min(cur/tgt,1),pct=Math.round(p*100),r=26,c=2*Math.PI*r,off=c*(1-p),col=statusColor(cur,tgt);
+  return `<div class="ring"><svg width="62" height="62" viewBox="0 0 62 62">
+    <circle cx="31" cy="31" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
+    <circle cx="31" cy="31" r="${r}" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
+    </svg><div class="pct" style="color:${col}">${pct}%</div></div>`;
+}
+function kpiCard(k){
+  if(editingId===k.id){
+    return `<div class="kpi" data-id="${k.id}">
+      <div class="kpi-head"><div class="kpi-name">${k.name}</div></div>
+      <div class="kpi-editor">
+        <div class="row">
+          <div class="field"><label>Current</label><input type="number" id="edit-cur" value="${k.cur}" step="any"></div>
+          <div class="field"><label>Target</label><input type="number" id="edit-tgt" value="${k.tgt}" step="any"></div>
+        </div>
+        <div class="btns"><button class="btn-sm save" data-save="${k.id}">Save</button><button class="btn-sm" data-cancel="1">Cancel</button></div>
+      </div></div>`;
+  }
+  return `<div class="kpi" data-id="${k.id}">
+    <div class="kpi-head"><div class="kpi-name">${k.name}</div><button class="kpi-edit" data-edit="${k.id}">Edit</button></div>
+    <div class="kpi-body">${ring(k.cur,k.tgt)}<div><div class="kpi-val">${k.fmt(k.cur)}</div><div class="kpi-target">of <b>${k.fmt(k.tgt)}</b> target</div></div></div>
+  </div>`;
+}
+function renderKpis(){
+  GROUPS.forEach(([elId,key])=>{document.getElementById(elId).innerHTML=KPI[key].map(kpiCard).join('')});
+  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>{editingId=b.dataset.edit;renderKpis()}));
+  document.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',()=>{editingId=null;renderKpis()}));
+  document.querySelectorAll('[data-save]').forEach(b=>b.addEventListener('click',()=>{
+    const k=findKpi(b.dataset.save);
+    const cur=parseFloat(document.getElementById('edit-cur').value),tgt=parseFloat(document.getElementById('edit-tgt').value);
+    if(!isNaN(cur))k.cur=cur;if(!isNaN(tgt))k.tgt=tgt;
+    editingId=null;renderKpis();persist();
+  }));
+}
+
+/* charts */
+function renderLine(){
+  const w=560,h=190,pad=10,pts=[3500,3850,4180,4500],min=3300,max=4600;
+  const xs=i=>pad+(i*(w-pad*2)/(pts.length-1)),ys=v=>h-pad-((v-min)/(max-min))*(h-pad*2);
+  let path=pts.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`).join(' ');
+  let area=path+` L${xs(pts.length-1)} ${h-pad} L${pad} ${h-pad} Z`;
+  let dots=pts.map((v,i)=>`<circle cx="${xs(i)}" cy="${ys(v)}" r="${i===pts.length-1?5:3.5}" fill="${i===pts.length-1?getCss('--accent'):'#0a0a0b'}" stroke="${getCss('--accent')}" stroke-width="2"/>`).join('');
+  document.getElementById('li-chart').innerHTML=`<svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${getCss('--accent')}" stop-opacity="0.22"/><stop offset="100%" stop-color="${getCss('--accent')}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#g)"/><path d="${path}" fill="none" stroke="${getCss('--accent')}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}</svg>`;
+}
+function renderGauge(){
+  const val=4.0,max=5,r=62,c=2*Math.PI*r,p=val/max,off=c*(1-p);
+  document.getElementById('li-gauge').innerHTML=`<svg width="150" height="150" viewBox="0 0 150 150" style="transform:rotate(-90deg)">
+    <circle cx="75" cy="75" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="11"/>
+    <circle cx="75" cy="75" r="${r}" fill="none" stroke="${getCss('--accent')}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" id="gauge-arc"/></svg>
+    <div class="center"><div class="big">4.0%</div><div class="lbl">Target</div></div>`;
+  requestAnimationFrame(()=>{const a=document.getElementById('gauge-arc');if(a){a.style.transition='stroke-dashoffset 1s ease';a.style.strokeDashoffset=off}});
+}
+
+/* emails */
+function renderMails(){
+  const list=document.getElementById('mail-list');
+  list.innerHTML=EMAILS.map((e,i)=>{
+    const on=approved.has(i);
+    return `<div class="mail ${on?'is-approved':''}" data-i="${i}">
+      <div class="mail-wk"><div class="m">${e.wk.split(' ')[0]}</div><div class="w">${e.wk.split(' ')[1]}</div></div>
+      <div class="mail-info"><div class="t">${e.t}</div><div class="d">${e.d}</div><div class="cta">CTA · ${e.cta}</div></div>
+      <div class="mail-act"><span class="status ${on?'approved':'pending'}">${on?'Approved':'Pending'}</span><button class="btn-approve">Approve</button></div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.btn-approve').forEach(btn=>btn.addEventListener('click',e=>{
+    const row=e.target.closest('.mail'),i=+row.dataset.i;
+    approved.add(i);renderMails();updateApprove();persist();
+  }));
+}
+function updateApprove(){
+  const n=approved.size;
+  document.getElementById('approved-count').textContent=n;
+  document.getElementById('approve-note').textContent=`${n} of 8 approved`;
+  document.getElementById('approve-bar').style.width=(n/8*100)+'%';
+}
+
+/* seo */
+function renderSeo(){
+  document.getElementById('kw-body').innerHTML=KEYWORDS.map(k=>`<tr><td><div class="kw-term">${k.term}</div><div class="kw-theme">${k.theme}</div></td><td class="r"><span class="vol">${k.vol}</span></td><td class="r"><span class="diff ${k.diff}">${k.diff}</span></td></tr>`).join('');
+  document.getElementById('rec-list').innerHTML=RECS.map((r,i)=>`<div class="rec"><div class="num">${i+1}</div><div class="tx">${r.t}<span>${r.d}</span></div></div>`).join('');
+}
+function generateReport(btn){const t=btn.textContent;btn.textContent='Building report';setTimeout(()=>{btn.textContent='Report ready';setTimeout(()=>btn.textContent=t,1600)},900)}
+
+/* init */
+(async function(){
+  await loadState();
+  renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();
+})();
+</script>
+</body>
+</html>
