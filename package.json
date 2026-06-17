@@ -1,6 +1,6 @@
 {
   "name": "ek-dashboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Earl Kendrick performance dashboard, built and managed by NXRD",
   "main": "server.js",
   "scripts": {
@@ -10,6 +10,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "@google-analytics/data": "^6.1.0"
   }
 }

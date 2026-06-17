@@ -158,6 +158,36 @@
   .rec .num{font-family:var(--display);font-weight:700;font-size:13px;color:var(--accent);width:26px;height:26px;border-radius:7px;background:var(--accent-soft);display:grid;place-items:center;flex-shrink:0}
   .rec .tx{font-size:13px;color:var(--text)}
   .rec .tx span{color:var(--muted);display:block;margin-top:2px;font-size:12px}
+  .ga-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+  .ga-dot{width:7px;height:7px;border-radius:50%;background:var(--muted-2)}
+  .ga-dot.live{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .ga-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+  .ga-stat{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+  .ga-stat .v{font-family:var(--display);font-weight:700;font-size:32px;letter-spacing:-1px;line-height:1}
+  .ga-stat .l{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-top:8px}
+  .ga-empty{margin-top:18px;padding:22px;border:1px dashed var(--border-strong);border-radius:14px;background:var(--surface-2)}
+  .ga-empty .t{font-weight:600;font-size:14px}
+  .ga-empty .d{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.55}
+  .ga-empty code{font-family:ui-monospace,monospace;font-size:12px;color:var(--accent);background:var(--accent-soft);padding:2px 6px;border-radius:5px}
+  .ga-chart-wrap{margin-top:18px}
+  .ga-chart{display:flex;align-items:flex-end;gap:10px;height:120px}
+  .ga-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+  .ga-bar .bar{width:100%;max-width:64px;background:linear-gradient(180deg,var(--accent),rgba(201,247,61,0.4));border-radius:7px 7px 0 0;min-height:4px;transition:height .5s ease}
+  .ga-bar .bl{font-size:11px;color:var(--muted)}
+  .ga-bar .bv{font-family:var(--display);font-weight:600;font-size:12px}
+  .comp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .comp{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 22px;transition:.18s}
+  .comp:hover{border-color:var(--border-strong)}
+  .comp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .comp-name{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-0.3px}
+  .comp-loc{font-size:12px;color:var(--muted);margin-top:2px}
+  .comp-tag{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+  .comp-tag.closest{color:var(--red);background:rgba(255,92,82,0.12);border:1px solid rgba(255,92,82,0.28)}
+  .comp-tag.head{color:var(--amber);background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.28)}
+  .comp-tag.tier{color:var(--muted);background:var(--surface-3);border:1px solid var(--border-strong)}
+  .comp-desc{font-size:13px;color:var(--text);margin-top:12px;line-height:1.5}
+  .comp-note{font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+  @media(max-width:768px){.comp-grid{grid-template-columns:1fr}}
   footer{max-width:1320px;margin:70px auto 0;padding:26px 40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;color:var(--muted-2);font-size:12px}
   footer b{color:var(--muted);font-weight:500}
   @media(max-width:980px){.topbar{padding:14px 20px}.wrap{padding:0 20px}.nav{display:none}.li-layout,.seo-layout{grid-template-columns:1fr}.grid.cols-4{grid-template-columns:repeat(2,1fr)}.grid.cols-3{grid-template-columns:1fr}h1{font-size:27px}}
@@ -173,10 +203,12 @@
     <div><div class="brand-name">Earl Kendrick</div><div class="brand-sub">Performance dashboard</div></div>
   </div>
   <nav class="nav">
+    <a href="#analytics">Analytics</a>
     <a href="#kpis">Deliverables</a>
     <a href="#linkedin">LinkedIn</a>
     <a href="#email">Email approvals</a>
     <a href="#seo">SEO</a>
+    <a href="#competition">Competition</a>
   </nav>
   <div class="topbar-right">
     <span class="save-state"><span class="save-dot" id="save-dot"></span><span id="save-text">Saved</span></span>
@@ -214,6 +246,22 @@
         <div class="rail-item"><div class="mo">Months 9 to 10</div><div class="nm">Dilapidations and Lease Advisory</div></div>
         <div class="rail-item"><div class="mo">Months 11 to 12</div><div class="nm">Heritage and Conservation</div></div>
       </div>
+    </div>
+  </section>
+
+  <section id="analytics">
+    <div class="section-head">
+      <span class="eyebrow">High level facts</span>
+      <h2>Website analytics</h2>
+      <p class="lead">Live from Google Analytics. Sessions and users across the last 90 days, pulled straight from the EK property.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Traffic overview</div>
+        <div class="panel-note"><span class="ga-badge" id="ga-badge"><span class="ga-dot" id="ga-dot"></span><span id="ga-status">Checking connection</span></span></div>
+      </div>
+      <div class="ga-stats" id="ga-stats"></div>
+      <div class="ga-chart-wrap"><div class="ga-chart" id="ga-chart"></div></div>
     </div>
   </section>
 
@@ -307,6 +355,20 @@
         <div class="rec-list" id="rec-list"></div>
       </div>
     </div>
+  </section>
+
+  <section id="competition">
+    <div class="section-head">
+      <span class="eyebrow">Market intelligence</span>
+      <h2>Competitor landscape</h2>
+      <p class="lead">Where Earl Kendrick sits against the field. Grouped by how directly each firm competes for the same managing agent and commercial work. Verify the tier above structures before quoting them in client facing material.</p>
+    </div>
+    <div class="group-label">Closest match · same target market</div>
+    <div class="comp-grid" id="comp-closest"></div>
+    <div class="group-label">Head to head · broader but overlapping</div>
+    <div class="comp-grid" id="comp-head"></div>
+    <div class="group-label">Tier above · commercial surveying and due diligence</div>
+    <div class="comp-grid" id="comp-tier"></div>
   </section>
 </div>
 
@@ -494,10 +556,75 @@ function renderSeo(){
 }
 function generateReport(btn){const t=btn.textContent;btn.textContent='Building report';setTimeout(()=>{btn.textContent='Report ready';setTimeout(()=>btn.textContent=t,1600)},900)}
 
+/* competition */
+const COMPETITORS={
+  closest:[
+    {name:"4site Consulting",loc:"London",tag:"Closest",cls:"closest",desc:"Pure focus on residential blocks, major works, building safety and surveying for the managing agent market. The single closest match to EK.",note:"Do not conflate with 4Site Surveys in Glasgow, an unrelated firm."},
+    {name:"Harris Associates",loc:"London",tag:"Closest",cls:"closest",desc:"Very closely aligned on services: pathology, RCAs, dilapidations, party wall, RAAC, BSA and remediation. Adds a facade specialism."},
+  ],
+  head:[
+    {name:"Ringley Group",loc:"London",tag:"Head to head",cls:"head",desc:"Building surveying, CapEx programmes, EWS1 and building safety alongside block management and valuations. A genuine head to head, though broader."},
+    {name:"Hallas and Co",loc:"London and Northern office",tag:"Head to head",cls:"head",desc:"Building pathology, contract admin, fire risk and lifecycle maintenance for managing agents."},
+    {name:"Pellings LLP",loc:"Bromley and Barnet",tag:"Head to head",cls:"head",desc:"Multidisciplinary architects, planners and surveyors with strong public sector and residential work."},
+    {name:"Fourth Wall BC",loc:"Manchester and national",tag:"Head to head",cls:"head",desc:"Positions itself as modernised building consultancy across the same regions EK covers."},
+  ],
+  tier:[
+    {name:"Watts Group",loc:"National",tag:"Tier above",cls:"tier",desc:"Commercial building surveying, dilapidations and technical due diligence at scale above EK."},
+    {name:"TFT · Tuffin Ferraby Taylor",loc:"National",tag:"Tier above",cls:"tier",desc:"Established commercial consultancy, strong on technical due diligence and project work."},
+    {name:"Malcolm Hollis · now Trident",loc:"National",tag:"Tier above",cls:"tier",desc:"Major commercial surveying and dilapidations practice. Confirm current structure before citing.",note:"Recently restructured. Verify the latest entity name before client facing use."},
+  ]
+};
+function compCard(c){
+  return `<div class="comp">
+    <div class="comp-top">
+      <div><div class="comp-name">${c.name}</div><div class="comp-loc">${c.loc}</div></div>
+      <span class="comp-tag ${c.cls}">${c.tag}</span>
+    </div>
+    <div class="comp-desc">${c.desc}</div>
+    ${c.note?`<div class="comp-note">${c.note}</div>`:''}
+  </div>`;
+}
+function renderCompetition(){
+  document.getElementById('comp-closest').innerHTML=COMPETITORS.closest.map(compCard).join('');
+  document.getElementById('comp-head').innerHTML=COMPETITORS.head.map(compCard).join('');
+  document.getElementById('comp-tier').innerHTML=COMPETITORS.tier.map(compCard).join('');
+}
+
+/* analytics */
+function fmtNum(n){return Number(n).toLocaleString()}
+function renderAnalytics(a){
+  const dot=document.getElementById('ga-dot'),status=document.getElementById('ga-status');
+  const stats=document.getElementById('ga-stats'),chart=document.getElementById('ga-chart');
+  const chartWrap=chart.parentElement;
+  if(!a||!a.configured){
+    dot.className='ga-dot';status.textContent='Not connected';
+    chartWrap.style.display='none';
+    stats.outerHTML='<div class="ga-empty" id="ga-stats"><div class="t">Google Analytics is not connected yet</div><div class="d">Add <code>GA_PROPERTY_ID</code> and <code>GOOGLE_CREDENTIALS_JSON</code> in Render and this block goes live with real sessions and users. No figures are shown until then so nothing here is invented.</div></div>';
+    return;
+  }
+  dot.className='ga-dot live';status.textContent='Live · Google Analytics · '+a.range;
+  stats.innerHTML=`
+    <div class="ga-stat"><div class="v">${fmtNum(a.sessions)}</div><div class="l">Sessions</div></div>
+    <div class="ga-stat"><div class="v">${fmtNum(a.users)}</div><div class="l">Total users</div></div>
+    <div class="ga-stat"><div class="v">${fmtNum(a.newUsers)}</div><div class="l">New users</div></div>`;
+  const months=a.monthly||[];
+  if(!months.length){chartWrap.style.display='none';return;}
+  chartWrap.style.display='';
+  const max=Math.max(...months.map(m=>m.sessions),1);
+  chart.innerHTML=months.map(m=>{
+    const h=Math.round((m.sessions/max)*100);
+    return `<div class="ga-bar"><div class="bv">${fmtNum(m.sessions)}</div><div class="bar" style="height:${h}%"></div><div class="bl">${m.label}</div></div>`;
+  }).join('');
+}
+async function loadAnalytics(){
+  try{const r=await fetch('/api/analytics');renderAnalytics(await r.json());}
+  catch(e){renderAnalytics({configured:false});}
+}
+
 /* init */
 (async function(){
   await loadState();
-  renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();
+  renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();renderCompetition();loadAnalytics();
 })();
 </script>
 </body>
