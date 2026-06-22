@@ -33,7 +33,7 @@ const DATA_FILE = path.join(__dirname, 'state.json');
 app.use(express.json({ limit: '1mb' }));
 
 /* ---------- saved figures and approvals ---------- */
-function defaultState() { return { kpis: {}, approved: [] }; }
+function defaultState() { return { kpis: {}, approved: [], tasks: [], liMom: {} }; }
 function readState() {
   try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
   catch (e) { return defaultState(); }
@@ -313,6 +313,72 @@ app.post('/api/generate-page', async (req, res) => {
   }
 });
 
+/* ---------- Anthropic gap ideas, theme aware, per competitor ---------- */
+app.post('/api/gap-ideas', async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(400).json({ ok: false, error: 'No ANTHROPIC_API_KEY set in Render' });
+
+  const competitor = (req.body && req.body.competitor ? String(req.body.competitor) : '').trim();
+  const context = (req.body && req.body.context ? String(req.body.context) : '').trim();
+  const theme = (req.body && req.body.theme ? String(req.body.theme) : '').trim();
+  const services = (req.body && req.body.services ? String(req.body.services) : '').trim();
+  const audience = (req.body && req.body.audience ? String(req.body.audience) : '').trim();
+  const research = !!(req.body && req.body.research);
+  if (!competitor || !theme) return res.status(400).json({ ok: false, error: 'A competitor and a theme are required' });
+
+  const system = [
+    'You advise Earl Kendrick, a UK building surveying and property consultancy, on how to win search and content ground from a named competitor.',
+    'Given one competitor and the current monthly content theme, find specific gaps in how that competitor covers the theme, that Earl Kendrick can exploit.',
+    '',
+    'House style rules, follow every one:',
+    'UK English. No hyphens anywhere. No em dashes. No emojis. Consultative and direct.',
+    '',
+    'Return only a single JSON object, no markdown fences, with exactly these keys:',
+    'competitor the competitor name echoed back,',
+    'ideas an array of 4 objects, each with: gap a short phrase naming the gap, why one sentence on why it beats this competitor on this theme, angle a concrete Earl Kendrick page or post title that fills the gap, query a short search phrase to target.'
+  ].join('\n');
+
+  const userMsg = [
+    'Competitor: ' + competitor,
+    context ? 'Competitor context: ' + context : '',
+    'Current theme: ' + theme,
+    services ? 'Theme services: ' + services : '',
+    audience ? 'Theme audience: ' + audience : '',
+    'Find four gaps against this competitor on this theme and give Earl Kendrick the angle to take each one.',
+    research ? 'Research the competitor on the web first.' : ''
+  ].filter(Boolean).join('\n');
+
+  const body = {
+    model: GEN_MODEL,
+    max_tokens: 2000,
+    system,
+    messages: [{ role: 'user', content: userMsg }]
+  };
+  if (research) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (data.error) return res.status(500).json({ ok: false, error: data.error.message || 'Anthropic API error' });
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    let parsed = null;
+    try {
+      const clean = text.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+      parsed = JSON.parse(clean);
+    } catch (e) {
+      return res.json({ ok: true, ideas: null, raw: text });
+    }
+    res.json({ ok: true, competitor: parsed.competitor || competitor, ideas: parsed.ideas || [] });
+  } catch (e) {
+    console.error('Gap ideas failed:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 /* ---------- routes ---------- */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
@@ -321,7 +387,9 @@ app.post('/api/state', (req, res) => {
   const body = req.body || {};
   const state = {
     kpis: body.kpis && typeof body.kpis === 'object' ? body.kpis : {},
-    approved: Array.isArray(body.approved) ? body.approved : []
+    approved: Array.isArray(body.approved) ? body.approved : [],
+    tasks: Array.isArray(body.tasks) ? body.tasks : [],
+    liMom: body.liMom && typeof body.liMom === 'object' ? body.liMom : {}
   };
   try { writeState(state); res.json({ ok: true }); }
   catch (e) { res.status(500).json({ ok: false, error: 'Could not save state' }); }
