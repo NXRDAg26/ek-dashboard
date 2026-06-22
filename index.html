@@ -294,6 +294,65 @@
     .view-area{padding:4px 18px 90px}
   }
   @media(prefers-reduced-motion:reduce){.view.active{animation:none}.skel{animation:none}}
+  /* content plan checklist */
+  .plan-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .plan-months{display:flex;gap:7px;flex-wrap:wrap}
+  .plan-month{background:var(--surface-2);color:var(--muted);border:1px solid var(--border);font-family:var(--body);font-size:12px;font-weight:600;padding:8px 13px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .plan-month:hover{color:var(--text)}
+  .plan-month.active{background:var(--accent);color:#0a0a0b;border-color:var(--accent)}
+  .plan-progress{display:flex;align-items:center;gap:12px;min-width:200px}
+  .plan-prog-track{flex:1;height:7px;background:var(--surface-3);border-radius:999px;overflow:hidden}
+  .plan-prog-track i{display:block;height:100%;background:var(--accent);border-radius:999px;width:0;transition:width .4s ease}
+  .plan-prog-text{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .plan-ch{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px}
+  .plan-ch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .plan-ch-title{font-family:var(--display);font-weight:600;font-size:15px}
+  .plan-ch-count{font-size:12px;color:var(--muted)}
+  .task{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-top:1px solid var(--border);cursor:pointer}
+  .task:first-of-type{border-top:none}
+  .task-box{width:18px;height:18px;border-radius:6px;border:1.5px solid var(--border-strong);flex-shrink:0;margin-top:1px;display:grid;place-items:center;transition:.15s}
+  .task-box svg{width:11px;height:11px;opacity:0;color:#0a0a0b}
+  .task.done .task-box{background:var(--accent);border-color:var(--accent)}
+  .task.done .task-box svg{opacity:1}
+  .task-text{font-size:13px;color:var(--text);line-height:1.45}
+  .task.done .task-text{color:var(--muted-2);text-decoration:line-through}
+  /* month on month */
+  .mom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mom-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .mom-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
+  .mom-now{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-0.6px;margin-top:8px}
+  .mom-foot{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .mom-prev{font-size:12px;color:var(--muted-2)}
+  .mom-delta{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .mom-delta.up{color:var(--green);background:var(--accent-soft)}
+  .mom-delta.down{color:var(--red);background:rgba(255,92,82,0.12)}
+  .mom-delta.flat{color:var(--muted);background:var(--surface-3)}
+  .mom-inputs{display:flex;gap:8px;margin-top:10px}
+  .mom-inputs .f{flex:1}
+  .mom-inputs label{font-size:10px;color:var(--muted-2);letter-spacing:0.05em;text-transform:uppercase}
+  .mom-inputs input{width:100%;background:var(--surface-3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--body);font-size:13px;padding:7px 9px;outline:none;margin-top:3px}
+  .mom-inputs input:focus{border-color:var(--accent)}
+  /* competitor gap ideas */
+  .theme-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 8px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px}
+  .theme-bar .tl{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
+  .theme-bar select{background:var(--surface-3);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--body);font-size:13px;padding:8px 12px;outline:none;cursor:pointer;flex:1;min-width:220px}
+  .theme-bar select:focus{border-color:var(--accent)}
+  .comp-actions{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .btn-ideas{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--accent);border:1px solid rgba(201,247,61,0.25);font-family:var(--body);font-weight:600;font-size:12px;padding:8px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .btn-ideas:hover{filter:brightness(1.1)}
+  .btn-ideas:disabled{opacity:.6;cursor:default}
+  .comp-ideas{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  .idea{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .idea-gap{font-family:var(--display);font-weight:600;font-size:14px;color:var(--accent)}
+  .idea-why{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:5px}
+  .idea-angle{font-size:13px;color:var(--text);line-height:1.5;margin-top:9px}
+  .idea-angle b{font-weight:600}
+  .idea-use{margin-top:10px;background:transparent;border:1px solid var(--border-strong);color:var(--text);font-family:var(--body);font-weight:600;font-size:11px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+  .idea-use:hover{border-color:var(--accent);color:var(--accent)}
+  .ideas-load{font-size:13px;color:var(--muted);padding:6px 0}
+  @media(max-width:760px){.plan-grid{grid-template-columns:1fr}.mom-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.mom-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -361,6 +420,17 @@
         <div class="rail-item"><div class="mo">Months 11 to 12</div><div class="nm">Heritage and Conservation</div></div>
       </div>
     </div>
+
+    <div class="section-head" style="margin-top:42px">
+      <span class="eyebrow">Content plan</span>
+      <h2>Activities to tick off</h2>
+      <p class="lead">The seven month programme from the content plan. Tick each item as it ships. Progress saves across the dashboard.</p>
+    </div>
+    <div class="plan-bar">
+      <div class="plan-months" id="plan-months"></div>
+      <div class="plan-progress"><div class="plan-prog-track"><i id="plan-prog-bar"></i></div><span class="plan-prog-text" id="plan-prog-text">0 of 0</span></div>
+    </div>
+    <div class="plan-grid" id="plan-grid"></div>
   </section>
 
   <section class="view" id="analytics">
@@ -399,6 +469,13 @@
     <div class="section-head">
       <span class="eyebrow">Channel deep dive</span>
       <h2>LinkedIn growth and engagement</h2>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-head">
+        <div class="panel-title">Month on month</div>
+        <button class="btn-copy" id="mom-edit" onclick="toggleMomEdit(this)">Edit figures</button>
+      </div>
+      <div class="mom-grid" id="mom-grid"></div>
     </div>
     <div class="li-layout">
       <div class="panel">
@@ -475,7 +552,11 @@
     <div class="section-head">
       <span class="eyebrow">Market intelligence</span>
       <h2>Competitor landscape</h2>
-      <p class="lead">Where Earl Kendrick sits against the field. Grouped by how directly each firm competes for the same managing agent and commercial work. Verify the tier above structures before quoting them in client facing material.</p>
+      <p class="lead">Where Earl Kendrick sits against the field. Grouped by how directly each firm competes for the same managing agent and commercial work. Pick the month theme, then ask for gap ideas against any competitor.</p>
+    </div>
+    <div class="theme-bar">
+      <span class="tl">Gap ideas against the theme</span>
+      <select id="comp-theme" onchange="setCompTheme(this.value)"></select>
     </div>
     <div class="group-label">Closest match · same target market</div>
     <div class="comp-grid" id="comp-closest"></div>
@@ -587,10 +668,62 @@ const RECS=[
   {t:"Set source attribution",d:"Mandatory hidden UTM field plus dropdown on every enquiry form. Target 80% coverage by month 3."},
 ];
 
-/* ---------------- state / persistence ---------------- */
-let approved=new Set();
+/* ---- content plan, from the EK 7 month sheet ---- */
+const PLAN=[
+  {m:1,theme:"Building Safety Act and BSCR",audience:"Building owners, developers, housing associations, registered providers",services:"Building Safety Act and Fire Services, Health and Safety",
+   blogs:["What the Building Safety Act Means for Building Owners in 2025","Do You Need a Building Safety Case Report? A Practical Guide","The 5 Most Common BSA Compliance Mistakes and How to Avoid Them","Higher Risk Buildings Explained: Who Needs to Act and When"],
+   cases:["Supporting a Developer Through Their First BSCR Submission","Identifying Critical Safety Gaps in a Residential Tower","BSA Compliance Review for a Housing Association Portfolio"],
+   emails:["Is your building registered under the Building Safety Act?","What is a Building Safety Case Report and does yours need one?","The risks building owners are overlooking right now","How Earl Kendrick supports clients through BSA compliance"],
+   li:["Education: What is the Building Safety Act? A plain English explainer","Director: Why BSA compliance is being underestimated by the market","Poll: How confident are you in your BSA compliance position?","Education: Higher risk buildings, do you know if yours qualifies?","Case study: Supporting a developer through their first BSCR submission","Commercial: Building owner or accountable person? How EK can help","Education: What is a Building Safety Case Report and who needs one?","Director: The 3 things building owners get wrong about BSA","Engagement: Are your clients asking about BSA yet?","Education: Key BSA dates and deadlines for 2025","Case study: Spotting safety gaps before formal registration","Commercial: BSA compliance reviews now available, book a consultation","Roundup: Month in review on the Building Safety Act"]},
+  {m:2,theme:"Project and Cost Consultancy",audience:"Developers, investors, contractors, asset managers",services:"Project Management, Cost Management, Development Monitoring",
+   blogs:["How Effective Cost Consultancy Protects Your Project from Day One","The Hidden Costs Developers Miss and How to Plan for Them","What to Expect from a Project Consultant: Roles, Responsibilities and Value","When Should You Bring in a Project Consultant?"],
+   cases:["Managing a Complex Mixed Use Development from Inception to Completion","How Early Cost Planning Saved a Client Six Figures on a London Refurbishment","Delivering a Residential Development on Programme and Within Budget"],
+   emails:["Are your project costs under control from the start?","The hidden costs that catch developers off guard","What does a project consultant actually do?","Real project. Real savings. See how we did it."],
+   li:["Education: What does a project consultant actually do?","Director: Appoint your cost consultant before you finalise your budget","Poll: At what stage do you appoint a project consultant?","Education: 5 cost risks developers underestimate","Case study: Early cost planning saved a client six figures","Commercial: Project and cost consultancy, how EK supports developers","Education: Pre construction planning, first 10% determines 90%","Director: The biggest project management mistake developers make","Engagement: Your biggest challenge managing construction cost?","Education: Construction inflation in 2025 and your budget","Case study: Mixed use development from inception to completion","Commercial: Working on a development? How EK can support you","Roundup: Month 2 on project and cost consultancy"]},
+  {m:3,theme:"Building Surveying and Technical Due Diligence",audience:"Investors, buyers, lenders, solicitors, asset managers",services:"Building Surveys, Building Pathology, Insurance Surveying, Reinstatement Cost Assessments",
+   blogs:["Why Technical Due Diligence Should Happen Before Any Acquisition","What a Building Survey Actually Covers and Why It Matters","Defect Analysis: Understanding What Your Survey Is Telling You","The True Cost of Skipping a Pre Purchase Survey"],
+   cases:["Uncovering Significant Structural Defects Pre Acquisition","Technical Due Diligence Across a Commercial Property Portfolio","Pre Acquisition Survey on a Historic Town Centre Building"],
+   emails:["Buying, refurbishing or investing? This is what you need first.","What does a building survey actually cover?","How one survey changed a clients acquisition decision","Do not let due diligence be an afterthought"],
+   li:["Education: What is technical due diligence and why every acquisition needs it","Director: I never advise an acquisition without a survey","Poll: Do you commission a survey before every acquisition?","Education: Level 1, 2, 3, which survey do you need?","Case study: How a pre acquisition survey changed a decision","Commercial: Pre acquisition surveys and TDD for your deal","Education: The most common defects in UK commercial buildings","Director: The survey findings clients did not expect","Engagement: Most unexpected issue you have found in a survey?","Education: Why lenders increasingly require TDD","Case study: TDD across a commercial portfolio at pace","Commercial: Planning an acquisition? Talk to EK before you commit","Roundup: Month 3 on building surveying and TDD"]},
+  {m:4,theme:"Interior and Architectural Design",audience:"Developers, homeowners, architects, landlords, commercial occupiers",services:"Interior and Architectural Design, Contract Administration, Licence to Alter",
+   blogs:["From Concept to Completion: What Interior and Architectural Design Covers","How Good Interior Design Adds Value to a Commercial Property","Designing for Compliance: What Building Regulations Mean for Your Project","When Should You Appoint an Architectural Designer on a Refurbishment?"],
+   cases:["Full Interior Design and Fit Out for a Central London Office Refurbishment","Architectural Design and Planning Support for a Listed Residential Conversion","Interior Design and Space Planning for a Mixed Use Development"],
+   emails:["Thinking about a refurbishment or fit out? Here is where to start.","How interior design adds value to your commercial property","From planning to completion, how EK manages the full design process","A London office refurbishment, from concept to handover"],
+   li:["Education: What does an interior and architectural design consultancy do?","Director: Design is not a luxury, it is a performance decision","Poll: When do you bring a designer into a refurbishment?","Education: Interior design vs architectural design vs fit out","Case study: Interior design and fit out for a London office","Commercial: Interior and architectural design, concept to completion","Education: Designing for building regulations","Director: The biggest design mistake on refurbishment projects","Engagement: How early do you bring design into projects?","Education: Space planning in commercial buildings","Case study: Architectural design for a listed conversion","Commercial: Planning a refurbishment? Talk to the EK design team","Roundup: Month 4 on interior and architectural design"]},
+  {m:5,theme:"Fire Safety and Compliance",audience:"Building owners, housing associations, asset managers, developers",services:"Building Safety Act and Fire Services, Health and Safety, Major Works and Section 20",
+   blogs:["Fire Safety Obligations for Building Owners Post Grenfell: What Has Changed","EWS1 Forms Explained: What They Are and When You Need One","How to Manage a Fire Risk Assessment Across a Large Building Portfolio","Responsible Persons Under the Fire Safety Act: Your Legal Obligations"],
+   cases:["EWS1 Assessments Across a Housing Association High Rise Portfolio","Fire Safety Remediation Consultancy on a 1970s Residential Complex","Fire Risk Assessment and Compliance Review for a Mixed Use Building"],
+   emails:["Is your building fire safe? A guide for owners and managers","EWS1 forms: do you need one and how do you get it?","Managing fire safety across multiple buildings? Here is how we help.","How we delivered EWS1 assessments across a housing association portfolio"],
+   li:["Education: What the Fire Safety Act means for building owners","Director: Why fire safety is still treated as a tick box","Poll: Has your building had an FRA in the last 12 months?","Education: EWS1 forms explained, who needs them","Case study: EWS1 assessments across a housing association portfolio","Commercial: Fire safety consultancy for building owners","Education: Who is the responsible person under the Fire Safety Act?","Director: The fire safety risks that keep me up at night","Engagement: How are you managing FRAs across portfolios?","Education: Legacy buildings and fire safety, the greatest challenge","Case study: Fire safety remediation on a 1970s complex","Commercial: Need fire safety support? Talk to Earl Kendrick","Roundup: Month 5 on fire safety and compliance"]},
+  {m:6,theme:"Dilapidations and Lease Advisory",audience:"Commercial landlords, tenants, solicitors, asset managers, occupiers",services:"Dilapidations, Licence to Alter, Contract Administration",
+   blogs:["Dilapidations Explained: What Landlords and Tenants Need to Know","How to Challenge a Dilapidations Claim Effectively","End of Lease Planning: Why Starting Early Makes All the Difference","Schedule of Condition vs Dilapidations Schedule: What is the Difference?"],
+   cases:["Successfully Defending a Dilapidations Claim for a Commercial Tenant","Negotiating a Complex Dilapidations Settlement on a Multi Floor Office Exit","Preparing a Schedule of Condition to Protect a New Tenant at Lease Entry"],
+   emails:["Lease ending soon? Here is what you need to prepare for.","Protect your position, dilapidations advice from Earl Kendrick","Landlord or tenant? Your dilapidations obligations explained.","How we reduced a dilapidations claim by negotiating hard"],
+   li:["Education: What are dilapidations? A guide for landlords and tenants","Director: The dilapidations mistakes tenants make, often too late","Poll: Have you dealt with a dilapidations claim at lease end?","Education: Schedule of condition vs dilapidations schedule","Case study: Successfully defending a dilapidations claim","Commercial: Approaching lease expiry? EK can protect your position","Education: When should a tenant start planning for dilapidations?","Director: Why a schedule of condition is a great investment","Engagement: Are your clients prepared for lease exit?","Education: The dilapidations negotiation process explained","Case study: Complex multi floor office dilapidations settlement","Commercial: Dilapidations and lease advisory, talk to EK","Roundup: Month 6 on dilapidations and lease advisory"]},
+  {m:7,theme:"Heritage, Conservation and Specialist Surveying",audience:"Developers, homeowners, architects, planners, local authorities",services:"Historical Building Repair, Building Surveys, Structural Engineering, Drone Surveys",
+   blogs:["Surveying Listed Buildings: What Makes It Different","Working Within Conservation Areas: What Developers and Owners Need to Know","The Role of a Building Surveyor in Heritage Restoration Projects","Listed Building Consent vs Planning Permission: Navigating the Process"],
+   cases:["Restoring a Grade II Listed Property in London, A Full Project Overview","Conservation Area Development Consultancy from Feasibility to Completion","Specialist Survey and Advice for a Historic Church Conversion"],
+   emails:["Working with a listed building or heritage asset? Start here.","Conservation area? Here is what you can and cannot do.","Earl Kendrick specialist heritage surveying services","From consent to completion, a Grade II listed restoration"],
+   li:["Education: What makes surveying a listed building different?","Director: Why heritage buildings deserve a different level of care","Poll: Have you worked on a listed or conservation project?","Education: What is listed building consent and when you need it","Case study: Restoring a Grade II listed building in London","Commercial: Heritage surveying and listed building consultancy","Education: Conservation areas, restrictions explained","Director: The biggest misconception about listed buildings","Engagement: Most challenging part of heritage constraints?","Education: Historic building materials and the wrong choices","Case study: Church conversion, navigating heritage complexity","Commercial: Working on a heritage project? Talk to EK specialists","Roundup: 7 month content roundup from Earl Kendrick"]}
+];
+const PLAN_CHANNELS=[["blogs","Blog posts"],["cases","Case studies"],["emails","Email campaigns"],["li","LinkedIn posts"]];
+
+/* ---- LinkedIn month on month, editable ---- */
+const LI_MOM=[
+  {id:"followers",label:"Followers",last:3500,now:3850,kind:"int"},
+  {id:"impressions",label:"Post impressions",last:18200,now:24600,kind:"int"},
+  {id:"engagement",label:"Engagement rate",last:2.5,now:3.1,kind:"pct"},
+  {id:"posts",label:"Posts published",last:12,now:13,kind:"int"},
+  {id:"comments",label:"Comments",last:34,now:51,kind:"int"},
+  {id:"profileviews",label:"Profile views",last:210,now:268,kind:"int"}
+];
 let editingId=null;
 let online=true;
+let tasksDone=new Set();
+let liMomState={};
+let momEditing=false;
+let PLAN_MONTH=1;
+let COMP_THEME=1;
 
 function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setSave(s){
@@ -606,13 +739,15 @@ async function loadState(){
     const s=await r.json();
     if(s.kpis){for(const id in s.kpis){const k=findKpi(id);if(k){if(s.kpis[id].cur!=null)k.cur=s.kpis[id].cur;if(s.kpis[id].tgt!=null)k.tgt=s.kpis[id].tgt;}}}
     if(Array.isArray(s.approved))approved=new Set(s.approved);
+    if(Array.isArray(s.tasks))tasksDone=new Set(s.tasks);
+    if(s.liMom&&typeof s.liMom==='object')liMomState=s.liMom;
     online=true;setSave('saved');
   }catch(e){online=false;setSave('offline');}
 }
 function buildPayload(){
   const kpis={};
   allKpis().forEach(k=>kpis[k.id]={cur:k.cur,tgt:k.tgt});
-  return {kpis,approved:[...approved]};
+  return {kpis,approved:[...approved],tasks:[...tasksDone],liMom:liMomState};
 }
 async function persist(){
   if(!online){setSave('offline');return;}
@@ -730,7 +865,9 @@ const COMPETITORS={
     {name:"Malcolm Hollis · now Trident",loc:"National",tag:"Tier above",cls:"tier",desc:"Major commercial surveying and dilapidations practice. Confirm current structure before citing.",note:"Recently restructured. Verify the latest entity name before client facing use."},
   ]
 };
+function compSlug(name){return name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 function compCard(c){
+  const slug=compSlug(c.name);
   return `<div class="comp">
     <div class="comp-top">
       <div><div class="comp-name">${c.name}</div><div class="comp-loc">${c.loc}</div></div>
@@ -738,12 +875,122 @@ function compCard(c){
     </div>
     <div class="comp-desc">${c.desc}</div>
     ${c.note?`<div class="comp-note">${c.note}</div>`:''}
+    <div class="comp-actions">
+      <button class="btn-ideas" onclick="gapIdeas('${escAttr(c.name)}','${escAttr(c.desc)}','${slug}',this)">Gap ideas vs theme</button>
+      <div class="comp-ideas" id="ideas-${slug}"></div>
+    </div>
   </div>`;
 }
 function renderCompetition(){
   document.getElementById('comp-closest').innerHTML=COMPETITORS.closest.map(compCard).join('');
   document.getElementById('comp-head').innerHTML=COMPETITORS.head.map(compCard).join('');
   document.getElementById('comp-tier').innerHTML=COMPETITORS.tier.map(compCard).join('');
+}
+function escAttr(s){return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+
+/* ---- content plan checklist ---- */
+function planMonth(){return PLAN.find(p=>p.m===PLAN_MONTH)||PLAN[0];}
+function renderPlanMonths(){
+  document.getElementById('plan-months').innerHTML=PLAN.map(p=>`<button class="plan-month ${p.m===PLAN_MONTH?'active':''}" onclick="setPlanMonth(${p.m})">Month ${p.m}</button>`).join('');
+}
+function setPlanMonth(m){PLAN_MONTH=m;renderPlanMonths();renderPlan();}
+function planItems(p){
+  const out=[];
+  PLAN_CHANNELS.forEach(([key])=>{(p[key]||[]).forEach((t,i)=>out.push('m'+p.m+'-'+key+'-'+i));});
+  return out;
+}
+function renderPlan(){
+  const p=planMonth();
+  const grid=document.getElementById('plan-grid');
+  grid.innerHTML=PLAN_CHANNELS.map(([key,label])=>{
+    const items=p[key]||[];
+    const done=items.filter((t,i)=>tasksDone.has('m'+p.m+'-'+key+'-'+i)).length;
+    const rows=items.map((t,i)=>{
+      const id='m'+p.m+'-'+key+'-'+i;const on=tasksDone.has(id);
+      return `<div class="task ${on?'done':''}" onclick="toggleTask('${id}')">
+        <div class="task-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg></div>
+        <div class="task-text">${t}</div></div>`;
+    }).join('');
+    return `<div class="plan-ch">
+      <div class="plan-ch-head"><div class="plan-ch-title">${label}</div><div class="plan-ch-count">${done} of ${items.length}</div></div>
+      ${rows}</div>`;
+  }).join('');
+  const all=planItems(p),doneAll=all.filter(id=>tasksDone.has(id)).length;
+  document.getElementById('plan-prog-text').textContent=doneAll+' of '+all.length;
+  document.getElementById('plan-prog-bar').style.width=(all.length?Math.round(doneAll/all.length*100):0)+'%';
+}
+function toggleTask(id){
+  if(tasksDone.has(id))tasksDone.delete(id);else tasksDone.add(id);
+  renderPlan();persist();
+}
+
+/* ---- LinkedIn month on month ---- */
+function momVal(id,field,fallback){const s=liMomState[id];if(s&&s[field]!=null)return s[field];return fallback;}
+function momFmt(v,kind){return kind==='pct'?(Math.round(v*10)/10)+'%':Number(v).toLocaleString();}
+function renderMom(){
+  const grid=document.getElementById('mom-grid');if(!grid)return;
+  grid.innerHTML=LI_MOM.map(m=>{
+    const last=momVal(m.id,'last',m.last),now=momVal(m.id,'now',m.now);
+    if(momEditing){
+      return `<div class="mom-card"><div class="mom-label">${m.label}</div>
+        <div class="mom-inputs">
+          <div class="f"><label>Last</label><input type="number" step="any" id="mom-${m.id}-last" value="${last}"></div>
+          <div class="f"><label>This</label><input type="number" step="any" id="mom-${m.id}-now" value="${now}"></div>
+        </div></div>`;
+    }
+    const diff=last==0?0:((now-last)/last)*100;
+    const dir=diff>0.05?'up':diff<-0.05?'down':'flat';
+    const arrow=dir==='up'?'&#9650;':dir==='down'?'&#9660;':'&#8211;';
+    const sign=diff>0?'+':'';
+    return `<div class="mom-card"><div class="mom-label">${m.label}</div>
+      <div class="mom-now">${momFmt(now,m.kind)}</div>
+      <div class="mom-foot"><span class="mom-delta ${dir}">${arrow} ${sign}${Math.round(diff*10)/10}%</span><span class="mom-prev">from ${momFmt(last,m.kind)}</span></div></div>`;
+  }).join('');
+}
+function toggleMomEdit(btn){
+  if(momEditing){
+    LI_MOM.forEach(m=>{
+      const l=document.getElementById('mom-'+m.id+'-last'),n=document.getElementById('mom-'+m.id+'-now');
+      if(l&&n){const lv=parseFloat(l.value),nv=parseFloat(n.value);liMomState[m.id]={last:isNaN(lv)?m.last:lv,now:isNaN(nv)?m.now:nv};}
+    });
+    momEditing=false;btn.textContent='Edit figures';renderMom();persist();toast('LinkedIn figures saved');
+  }else{
+    momEditing=true;btn.textContent='Save figures';renderMom();
+  }
+}
+
+/* ---- competitor gap ideas ---- */
+function renderCompThemes(){
+  const sel=document.getElementById('comp-theme');if(!sel)return;
+  sel.innerHTML=PLAN.map(p=>`<option value="${p.m}" ${p.m===COMP_THEME?'selected':''}>Month ${p.m} · ${p.theme}</option>`).join('');
+}
+function setCompTheme(m){COMP_THEME=parseInt(m,10);}
+async function gapIdeas(name,desc,slug,btn){
+  const p=PLAN.find(x=>x.m===COMP_THEME)||PLAN[0];
+  const box=document.getElementById('ideas-'+slug);
+  btn.disabled=true;const label=btn.textContent;btn.textContent='Finding gaps';
+  box.innerHTML='<div class="ideas-load">Finding gaps against '+p.theme+'. This can take a moment.</div>';
+  try{
+    const r=await fetch('/api/gap-ideas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({competitor:name,context:desc,theme:p.theme,services:p.services,audience:p.audience,research:true})});
+    const d=await r.json();
+    if(!d.ok){box.innerHTML='<div class="ideas-load">Could not load ideas. '+escapeHtml(d.error||'Unknown error')+'</div>';btn.disabled=false;btn.textContent=label;return;}
+    if(!d.ideas||!d.ideas.length){box.innerHTML='<div class="ideas-load">No structured ideas returned. Try again.</div>';btn.disabled=false;btn.textContent=label;return;}
+    box.innerHTML=d.ideas.map(i=>`<div class="idea">
+      <div class="idea-gap">${escapeHtml(i.gap||'')}</div>
+      <div class="idea-why">${escapeHtml(i.why||'')}</div>
+      <div class="idea-angle"><b>Angle:</b> ${escapeHtml(i.angle||'')}</div>
+      ${i.query?`<button class="idea-use" onclick="useIdea('${escAttr(i.query)}','${escAttr(name)}')">Build counter page</button>`:''}
+    </div>`).join('');
+    btn.textContent='Refresh gaps';btn.disabled=false;
+  }catch(e){box.innerHTML='<div class="ideas-load">Request failed. '+escapeHtml(e.message)+'</div>';btn.disabled=false;btn.textContent=label;}
+}
+function useIdea(query,competitor){
+  showView('counter');
+  const q=document.getElementById('gen-query');if(q)q.value=query;
+  SELECTED_COMPS=[competitor];
+  document.querySelectorAll('.gen-chip').forEach(c=>c.classList.toggle('on',c.getAttribute('data-name')===competitor));
+  const out=document.getElementById('gen-query');if(out)out.focus();
+  toast('Loaded into the generator');
 }
 
 /* analytics */
@@ -964,6 +1211,7 @@ async function signOut(e){
   await loadState();
   await initAuth();
   renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();renderCompetition();renderGenComps();
+  renderPlanMonths();renderPlan();renderMom();renderCompThemes();
   loadAnalytics();loadGaps();
 })();
 </script>
