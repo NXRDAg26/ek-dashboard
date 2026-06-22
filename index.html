@@ -247,33 +247,91 @@
   .signin-cta .d{font-size:13px;color:var(--muted);line-height:1.6;max-width:560px}
   .signin-cta a{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#0a0a0b;font-family:var(--display);font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;text-decoration:none;transition:.16s}
   .signin-cta a:hover{filter:brightness(1.06)}
+  /* ---- app shell ---- */
+  body{padding-bottom:0}
+  .app{display:flex;min-height:100vh}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:248px;display:flex;flex-direction:column;padding:20px 14px;background:var(--surface);border-right:1px solid var(--border);z-index:60}
+  .sidebar .brand{padding:6px 10px 20px}
+  .side-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;margin-top:4px}
+  .side-link{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:none;color:var(--muted);font-family:var(--body);font-size:14px;font-weight:500;padding:11px 12px;border-radius:11px;cursor:pointer;transition:.15s;position:relative}
+  .side-link svg{width:18px;height:18px;flex-shrink:0;opacity:.85}
+  .side-link:hover{background:var(--surface-2);color:var(--text)}
+  .side-link.active{background:var(--accent-soft);color:var(--accent)}
+  .side-link.active svg{opacity:1}
+  .side-link.active::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+  .sidebar-foot{display:flex;flex-direction:column;gap:12px;padding:16px 8px 4px;margin-top:8px;border-top:1px solid var(--border)}
+  .main{flex:1;margin-left:248px;min-width:0;display:flex;flex-direction:column;min-height:100vh}
+  .app-header{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 36px;background:rgba(10,10,11,0.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+  .app-header-left{display:flex;align-items:center;gap:14px;min-width:0}
+  .menu-toggle{display:none}
+  .view-title{font-family:var(--display);font-weight:700;font-size:21px;letter-spacing:-0.4px;line-height:1.1}
+  .view-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .view-area{flex:1;padding:6px 36px 64px;max-width:1240px;width:100%}
+  .view{display:none}
+  .view.active{display:block;animation:viewIn .3s ease}
+  @keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .view .section-head{margin:24px 0 22px}
+  .view>.section-head:first-child{margin-top:16px}
+  .view-foot{margin-top:46px;padding-top:22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--muted-2);font-size:12px}
+  .view-foot b{color:var(--muted);font-weight:500}
+  /* toast */
+  .toast-wrap{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none}
+  .toast{display:flex;align-items:center;gap:10px;background:var(--surface-3);border:1px solid var(--border-strong);color:var(--text);font-size:13px;font-weight:500;padding:12px 18px;border-radius:12px;box-shadow:0 14px 44px rgba(0,0,0,.55);opacity:0;transform:translateY(12px);transition:.3s}
+  .toast.show{opacity:1;transform:none}
+  .toast .td{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);flex-shrink:0}
+  /* skeleton */
+  .skel{background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface-3) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:shimmer 1.3s linear infinite;border-radius:9px}
+  @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+  .menu-overlay{display:none}
+  @media(max-width:900px){
+    .sidebar{transform:translateX(-100%);transition:transform .26s ease;width:270px;box-shadow:0 0 60px rgba(0,0,0,.6)}
+    .sidebar.open{transform:none}
+    .main{margin-left:0}
+    .menu-toggle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:11px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer;flex-shrink:0}
+    .menu-overlay.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:55}
+    .app-header{padding:13px 18px}
+    .view-title{font-size:18px}
+    .view-area{padding:4px 18px 90px}
+  }
+  @media(prefers-reduced-motion:reduce){.view.active{animation:none}.skel{animation:none}}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-mark">EK</div>
-    <div><div class="brand-name">Earl Kendrick</div><div class="brand-sub">Performance dashboard</div></div>
-  </div>
-  <nav class="nav">
-    <a href="#analytics">Analytics</a>
-    <a href="#kpis">Deliverables</a>
-    <a href="#linkedin">LinkedIn</a>
-    <a href="#email">Email approvals</a>
-    <a href="#seo">SEO</a>
-    <a href="#competition">Competition</a>
-    <a href="#counter">Growth</a>
-  </nav>
-  <div class="topbar-right">
-    <span class="save-state"><span class="save-dot" id="save-dot"></span><span id="save-text">Saved</span></span>
-    <a class="btn-google" id="auth-btn" href="/auth/login">Sign in for Analytics</a>
-    <button class="btn-primary" onclick="generateReport(this)">Generate report</button>
-  </div>
-</div>
-
-<div class="wrap">
-  <section id="focus">
+<div class="menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">EK</div>
+      <div><div class="brand-name">Earl Kendrick</div><div class="brand-sub">Performance dashboard</div></div>
+    </div>
+    <nav class="side-nav">
+      <button class="side-link" data-view="focus" onclick="showView('focus')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg> Overview</button>
+      <button class="side-link" data-view="analytics" onclick="showView('analytics')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11"/><path d="M12 20V5"/><path d="M19 20v-7"/></svg> Analytics</button>
+      <button class="side-link" data-view="kpis" onclick="showView('kpis')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 14l9 5 9-5"/></svg> Deliverables</button>
+      <button class="side-link" data-view="linkedin" onclick="showView('linkedin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-6 4 14 2-8h4"/></svg> LinkedIn</button>
+      <button class="side-link" data-view="email" onclick="showView('email')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg> Email</button>
+      <button class="side-link" data-view="seo" onclick="showView('seo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> SEO</button>
+      <button class="side-link" data-view="competition" onclick="showView('competition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg> Competition</button>
+      <button class="side-link" data-view="counter" onclick="showView('counter')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg> Growth</button>
+    </nav>
+    <div class="sidebar-foot">
+      <span class="save-state"><span class="save-dot" id="save-dot"></span><span id="save-text">Saved</span></span>
+      <a class="btn-google" id="auth-btn" href="/auth/login">Sign in for Analytics</a>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="app-header">
+      <div class="app-header-left">
+        <button class="menu-toggle" onclick="toggleMenu()" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        <div><div class="view-title" id="view-title">Overview</div><div class="view-sub" id="view-sub">Theme cycle and headline deliverables</div></div>
+      </div>
+      <div class="app-header-right">
+        <button class="btn-primary" onclick="generateReport(this)">Generate report</button>
+      </div>
+    </header>
+    <div class="view-area">
+  <section class="view" id="focus">
     <div class="section-head">
       <span class="eyebrow">Live programme status</span>
       <h1>Content and marketing performance</h1>
@@ -305,7 +363,7 @@
     </div>
   </section>
 
-  <section id="analytics">
+  <section class="view" id="analytics">
     <div class="section-head">
       <span class="eyebrow">High level facts</span>
       <h2>Website analytics</h2>
@@ -321,7 +379,7 @@
     </div>
   </section>
 
-  <section id="kpis">
+  <section class="view" id="kpis">
     <div class="section-head">
       <span class="eyebrow">Key deliverables</span>
       <h2>Headline three month targets</h2>
@@ -337,7 +395,7 @@
     <div class="grid cols-4" id="grid-content"></div>
   </section>
 
-  <section id="linkedin">
+  <section class="view" id="linkedin">
     <div class="section-head">
       <span class="eyebrow">Channel deep dive</span>
       <h2>LinkedIn growth and engagement</h2>
@@ -378,7 +436,7 @@
     </div>
   </section>
 
-  <section id="email">
+  <section class="view" id="email">
     <div class="section-head">
       <span class="eyebrow">Awaiting sign off</span>
       <h2>Email marketing plan · CAPEX theme</h2>
@@ -395,7 +453,7 @@
     </div>
   </section>
 
-  <section id="seo">
+  <section class="view" id="seo">
     <div class="section-head">
       <span class="eyebrow">Search and answer engines</span>
       <h2>SEO and AEO suggestions</h2>
@@ -413,7 +471,7 @@
     </div>
   </section>
 
-  <section id="competition">
+  <section class="view" id="competition">
     <div class="section-head">
       <span class="eyebrow">Market intelligence</span>
       <h2>Competitor landscape</h2>
@@ -427,7 +485,7 @@
     <div class="comp-grid" id="comp-tier"></div>
   </section>
 
-  <section id="counter">
+  <section class="view" id="counter">
     <div class="section-head">
       <span class="eyebrow">Growth engine</span>
       <h2>Counter page generator</h2>
@@ -466,12 +524,14 @@
       <div class="gen-preview" id="gen-preview"></div>
     </div>
   </section>
+      <div class="view-foot">
+        <div>Earl Kendrick Content and Marketing Plan v2 · <b>Two month theme cycle</b> · Commercial audience focus</div>
+        <div>Built and managed by <b>NXRD</b></div>
+      </div>
+    </div>
+  </main>
 </div>
-
-<footer>
-  <div>Earl Kendrick Content and Marketing Plan v2 · <b>Two month theme cycle</b> · Commercial audience focus</div>
-  <div>Built and managed by <b>NXRD</b></div>
-</footer>
+<div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
 /* ---------------- data ---------------- */
@@ -598,7 +658,7 @@ function renderKpis(){
     const k=findKpi(b.dataset.save);
     const cur=parseFloat(document.getElementById('edit-cur').value),tgt=parseFloat(document.getElementById('edit-tgt').value);
     if(!isNaN(cur))k.cur=cur;if(!isNaN(tgt))k.tgt=tgt;
-    editingId=null;renderKpis();persist();
+    editingId=null;renderKpis();persist();toast('Figures saved');
   }));
 }
 
@@ -650,7 +710,7 @@ function renderSeo(){
   document.getElementById('kw-body').innerHTML=KEYWORDS.map(k=>`<tr><td><div class="kw-term">${k.term}</div><div class="kw-theme">${k.theme}</div></td><td class="r"><span class="vol">${k.vol}</span></td><td class="r"><span class="diff ${k.diff}">${k.diff}</span></td></tr>`).join('');
   document.getElementById('rec-list').innerHTML=RECS.map((r,i)=>`<div class="rec"><div class="num">${i+1}</div><div class="tx">${r.t}<span>${r.d}</span></div></div>`).join('');
 }
-function generateReport(btn){const t=btn.textContent;btn.textContent='Building report';setTimeout(()=>{btn.textContent='Report ready';setTimeout(()=>btn.textContent=t,1600)},900)}
+function generateReport(btn){const t=btn.textContent;btn.textContent='Building report';btn.disabled=true;setTimeout(()=>{btn.textContent='Report ready';toast('Report ready');setTimeout(()=>{btn.textContent=t;btn.disabled=false;},1600)},900)}
 
 /* competition */
 const COMPETITORS={
@@ -719,8 +779,9 @@ function renderAnalytics(a){
   }).join('');
 }
 async function loadAnalytics(){
+  if(AUTH.signedIn)gaSkeleton();
   try{const r=await fetch('/api/analytics');renderAnalytics(await r.json());}
-  catch(e){renderAnalytics({configured:false});}
+  catch(e){renderAnalytics({configured:false,signedIn:AUTH.signedIn});}
 }
 
 /* counter page generator */
@@ -774,6 +835,7 @@ function renderGapList(){
 }
 async function loadGaps(){
   const dot=document.getElementById('gsc-dot'),status=document.getElementById('gsc-status');
+  if(AUTH.signedIn)gapSkeleton();
   try{
     const r=await fetch('/api/searchconsole/gaps');
     const d=await r.json();
@@ -817,8 +879,56 @@ async function generatePage(){
 }
 function copyPageHtml(btn){
   if(!LAST_HTML)return;
-  navigator.clipboard.writeText(LAST_HTML).then(()=>{const t=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=t,1400);});
+  navigator.clipboard.writeText(LAST_HTML).then(()=>{const t=btn.textContent;btn.textContent='Copied';toast('HTML block copied');setTimeout(()=>btn.textContent=t,1400);});
 }
+
+/* ---- app shell ---- */
+const VIEWS={
+  focus:{title:'Overview',sub:'Theme cycle and headline deliverables'},
+  analytics:{title:'Analytics',sub:'Live website performance'},
+  kpis:{title:'Deliverables',sub:'Targets and progress this cycle'},
+  linkedin:{title:'LinkedIn',sub:'Audience growth and positioning'},
+  email:{title:'Email',sub:'Sends awaiting approval'},
+  seo:{title:'SEO',sub:'Search and answer engine targets'},
+  competition:{title:'Competition',sub:'The competitor landscape'},
+  counter:{title:'Growth',sub:'Live gaps and counter pages'}
+};
+function showView(id){
+  if(!VIEWS[id])id='focus';
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('.side-link').forEach(l=>l.classList.toggle('active',l.dataset.view===id));
+  document.getElementById('view-title').textContent=VIEWS[id].title;
+  document.getElementById('view-sub').textContent=VIEWS[id].sub;
+  window.scrollTo(0,0);
+  closeMenu();
+  if(('#'+id)!==location.hash) history.replaceState(null,'','#'+id);
+}
+function toggleMenu(){
+  const open=document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('menu-overlay').classList.toggle('show',open);
+}
+function closeMenu(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('menu-overlay').classList.remove('show');
+}
+let toastTimer=null;
+function toast(msg){
+  const wrap=document.getElementById('toast-wrap');if(!wrap)return;
+  const el=document.createElement('div');el.className='toast';
+  el.innerHTML='<span class="td"></span><span></span>';
+  el.lastChild.textContent=msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),320);},2400);
+}
+function gaSkeleton(){
+  const s=document.getElementById('ga-stats');if(s)s.innerHTML='<div class="skel" style="height:66px;flex:1"></div><div class="skel" style="height:66px;flex:1"></div><div class="skel" style="height:66px;flex:1"></div>';
+}
+function gapSkeleton(){
+  const l=document.getElementById('gap-list');if(l)l.innerHTML=Array.from({length:5}).map(()=>'<div class="skel" style="height:50px;margin-bottom:8px"></div>').join('');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+window.addEventListener('hashchange',()=>showView((location.hash||'#focus').slice(1)));
 
 /* google sign in state */
 let AUTH={oauthConfigured:false,signedIn:false,email:null};
@@ -850,6 +960,7 @@ async function signOut(e){
 
 /* init */
 (async function(){
+  showView((location.hash||'#focus').slice(1));
   await loadState();
   await initAuth();
   renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();renderCompetition();renderGenComps();
