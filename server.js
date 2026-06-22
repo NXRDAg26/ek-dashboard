@@ -1,26 +1,32 @@
 // Earl Kendrick performance dashboard
-// Node / Express server with JSON persistence, live Google Analytics,
-// live Google Search Console gap finding and an Anthropic powered counter page generator
+// Node / Express server with JSON persistence, live Google Analytics and
+// Google Search Console via Google sign in, plus an Anthropic powered counter page generator
 // Built and managed by NXRD
 //
-// Credentials are read from environment variables only, never from the repo.
+// Google data uses OAuth, the same model as the Novograf dashboard. You sign in
+// once with the Google account that already has access to both the GA4 property
+// and the Search Console property, and the dashboard reads both on your behalf.
+// There is no service account and no credentials to paste.
+//
 // Set these in Render:
-//   GA_PROPERTY_ID          the 9 digit GA4 property id
+//   GOOGLE_CLIENT_ID        OAuth client id from Google Cloud Console
+//   GOOGLE_CLIENT_SECRET    OAuth client secret
+//   GA_PROPERTY_ID          the 9 digit GA4 property to report on
 //   GSC_SITE_URL            the Search Console property, eg sc-domain:earlkendrick.co.uk
-//                           or the full url form https://www.earlkendrick.co.uk/
-//   GOOGLE_CREDENTIALS_JSON the full service account JSON key, used for both GA and Search Console
-//   ANTHROPIC_API_KEY       your Claude API key, used by the counter page generator
-// The same service account must be granted Viewer on the GA4 property and added
-// as a user on the Search Console property. Any block whose credentials are not
-// set shows a not connected state rather than any invented figures.
+//                           or the url form https://www.earlkendrick.co.uk/
+//   ANTHROPIC_API_KEY       your Claude key for the counter page generator
+//   BASE_URL                optional, eg https://ek-dashboard-rr91.onrender.com
+//                           used to build the OAuth redirect, derived from the
+//                           request if not set
 
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { BetaAnalyticsDataClient } = require('@google-analytics/data');
+const crypto = require('crypto');
 const { google } = require('googleapis');
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'state.json');
 
@@ -34,57 +40,103 @@ function readState() {
 }
 function writeState(state) { fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2)); }
 
-/* ---------- Google Analytics ---------- */
-let analyticsClient = null;
-let analyticsReady = false;
+/* ---------- Google OAuth ---------- */
+const OAUTH_SCOPES = [
+  'https://www.googleapis.com/auth/analytics.readonly',
+  'https://www.googleapis.com/auth/webmasters.readonly',
+  'openid',
+  'email'
+];
 
-function initAnalytics() {
-  const propertyId = process.env.GA_PROPERTY_ID;
-  if (!propertyId) return;
-  try {
-    if (process.env.GOOGLE_CREDENTIALS_JSON) {
-      const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-      analyticsClient = new BetaAnalyticsDataClient({
-        credentials: { client_email: creds.client_email, private_key: creds.private_key }
-      });
-      analyticsReady = true;
-    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      analyticsClient = new BetaAnalyticsDataClient();
-      analyticsReady = true;
-    }
-  } catch (e) {
-    console.error('Analytics init failed:', e.message);
-    analyticsReady = false;
-  }
+const oauthConfigured = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
+function baseUrl(req) {
+  if (process.env.BASE_URL) return process.env.BASE_URL.replace(/\/$/, '');
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  return proto + '://' + req.headers.host;
 }
-initAnalytics();
-
-/* ---------- Google Search Console ---------- */
-let gscClient = null;
-let gscReady = false;
-
-function initSearchConsole() {
-  const site = process.env.GSC_SITE_URL;
-  if (!site) return;
-  try {
-    let auth;
-    const scopes = ['https://www.googleapis.com/auth/webmasters.readonly'];
-    if (process.env.GOOGLE_CREDENTIALS_JSON) {
-      const creds = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-      auth = new google.auth.JWT(creds.client_email, null, creds.private_key, scopes);
-    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      auth = new google.auth.GoogleAuth({ scopes });
-    } else {
-      return;
-    }
-    gscClient = google.searchconsole({ version: 'v1', auth });
-    gscReady = true;
-  } catch (e) {
-    console.error('Search Console init failed:', e.message);
-    gscReady = false;
-  }
+function redirectUri(req) {
+  return process.env.OAUTH_REDIRECT_URI || (baseUrl(req) + '/auth/callback');
 }
-initSearchConsole();
+function oauthClient(req) {
+  return new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUri(req));
+}
+
+// In memory session store. Single instance on Render free, so this holds while
+// the service is awake. After a spin down or redeploy you sign in again.
+const sessions = new Map(); // sessionId -> { tokens, email }
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  const out = {};
+  header.split(';').forEach(part => {
+    const i = part.indexOf('=');
+    if (i > -1) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  });
+  return out;
+}
+function getSession(req) {
+  const sid = parseCookies(req).ek_sess;
+  if (sid && sessions.has(sid)) return Object.assign({ sid }, sessions.get(sid));
+  return null;
+}
+function authedClient(req) {
+  const s = getSession(req);
+  if (!s) return null;
+  const client = oauthClient(req);
+  client.setCredentials(s.tokens);
+  client.on('tokens', t => {
+    const cur = sessions.get(s.sid) || {};
+    sessions.set(s.sid, Object.assign({}, cur, { tokens: Object.assign({}, cur.tokens, t) }));
+  });
+  return client;
+}
+
+app.get('/auth/login', (req, res) => {
+  if (!oauthConfigured()) return res.status(500).send('OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Render.');
+  const client = oauthClient(req);
+  const url = client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    include_granted_scopes: true,
+    scope: OAUTH_SCOPES
+  });
+  res.redirect(url);
+});
+
+app.get('/auth/callback', async (req, res) => {
+  if (!req.query.code) return res.redirect('/');
+  try {
+    const client = oauthClient(req);
+    const { tokens } = await client.getToken(req.query.code);
+    client.setCredentials(tokens);
+    let email = null;
+    try {
+      const oauth2 = google.oauth2({ version: 'v2', auth: client });
+      const me = await oauth2.userinfo.get();
+      email = me.data.email;
+    } catch (e) { /* email is optional */ }
+    const sid = crypto.randomUUID();
+    sessions.set(sid, { tokens, email });
+    res.setHeader('Set-Cookie', 'ek_sess=' + sid + '; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000');
+    res.redirect('/#analytics');
+  } catch (e) {
+    console.error('OAuth callback failed:', e.message);
+    res.redirect('/?auth=error');
+  }
+});
+
+app.post('/auth/logout', (req, res) => {
+  const s = getSession(req);
+  if (s) sessions.delete(s.sid);
+  res.setHeader('Set-Cookie', 'ek_sess=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
+  res.json({ ok: true });
+});
+
+app.get('/api/auth/status', (req, res) => {
+  const s = getSession(req);
+  res.json({ oauthConfigured: oauthConfigured(), signedIn: !!s, email: s ? s.email : null });
+});
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function labelFromYearMonth(ym) {
@@ -92,48 +144,60 @@ function labelFromYearMonth(ym) {
   return MONTHS[m - 1] || ym;
 }
 
+/* ---------- Google Analytics, via the signed in account ---------- */
 app.get('/api/analytics', async (req, res) => {
-  if (!analyticsReady) return res.json({ configured: false });
-  const property = `properties/${process.env.GA_PROPERTY_ID}`;
+  const auth = authedClient(req);
+  if (!auth) return res.json({ configured: false, signedIn: false });
+  if (!process.env.GA_PROPERTY_ID) return res.json({ configured: false, signedIn: true, error: 'GA_PROPERTY_ID not set' });
   try {
-    const [totals] = await analyticsClient.runReport({
-      property,
-      dateRanges: [{ startDate: '90daysAgo', endDate: 'today' }],
-      metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'newUsers' }]
-    });
-    const v = (totals.rows && totals.rows[0]) ? totals.rows[0].metricValues.map(x => Number(x.value)) : [0, 0, 0];
+    const data = google.analyticsdata({ version: 'v1beta', auth });
+    const property = 'properties/' + process.env.GA_PROPERTY_ID;
 
-    const [byMonth] = await analyticsClient.runReport({
+    const totals = await data.properties.runReport({
       property,
-      dateRanges: [{ startDate: '90daysAgo', endDate: 'today' }],
-      dimensions: [{ name: 'yearMonth' }],
-      metrics: [{ name: 'sessions' }],
-      orderBys: [{ dimension: { dimensionName: 'yearMonth' } }]
+      requestBody: {
+        dateRanges: [{ startDate: '90daysAgo', endDate: 'today' }],
+        metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'newUsers' }]
+      }
     });
-    const monthly = (byMonth.rows || []).map(r => ({
+    const tr = totals.data.rows && totals.data.rows[0];
+    const v = tr ? tr.metricValues.map(x => Number(x.value)) : [0, 0, 0];
+
+    const byMonth = await data.properties.runReport({
+      property,
+      requestBody: {
+        dateRanges: [{ startDate: '90daysAgo', endDate: 'today' }],
+        dimensions: [{ name: 'yearMonth' }],
+        metrics: [{ name: 'sessions' }],
+        orderBys: [{ dimension: { dimensionName: 'yearMonth' } }]
+      }
+    });
+    const monthly = (byMonth.data.rows || []).map(r => ({
       label: labelFromYearMonth(r.dimensionValues[0].value),
       sessions: Number(r.metricValues[0].value)
     }));
 
-    res.json({ configured: true, range: 'Last 90 days', sessions: v[0], users: v[1], newUsers: v[2], monthly });
+    res.json({ configured: true, signedIn: true, range: 'Last 90 days', sessions: v[0], users: v[1], newUsers: v[2], monthly });
   } catch (e) {
     console.error('Analytics query failed:', e.message);
-    res.json({ configured: false, error: e.message });
+    res.json({ configured: false, signedIn: true, error: e.message });
   }
 });
 
-/* ---------- Search Console gap finder ---------- */
+/* ---------- Search Console gap finder, via the signed in account ---------- */
 app.get('/api/searchconsole/gaps', async (req, res) => {
-  if (!gscReady) return res.json({ configured: false });
-  const siteUrl = process.env.GSC_SITE_URL;
+  const auth = authedClient(req);
+  if (!auth) return res.json({ configured: false, signedIn: false });
+  if (!process.env.GSC_SITE_URL) return res.json({ configured: false, signedIn: true, error: 'GSC_SITE_URL not set' });
   try {
+    const gsc = google.searchconsole({ version: 'v1', auth });
     const end = new Date();
     const start = new Date();
     start.setDate(start.getDate() - 90);
     const fmt = d => d.toISOString().slice(0, 10);
 
-    const resp = await gscClient.searchanalytics.query({
-      siteUrl,
+    const resp = await gsc.searchanalytics.query({
+      siteUrl: process.env.GSC_SITE_URL,
       requestBody: {
         startDate: fmt(start),
         endDate: fmt(end),
@@ -151,22 +215,20 @@ app.get('/api/searchconsole/gaps', async (req, res) => {
       position: Number(r.position.toFixed(1))
     }));
 
-    // Striking distance: ranking just off page one, real demand behind it
     const striking = rows
       .filter(r => r.position >= 8 && r.position <= 20 && r.impressions >= 30)
       .sort((a, b) => b.impressions - a.impressions)
       .slice(0, 25);
 
-    // Lost clicks: visible on page one but the click through is leaking away
     const lostclicks = rows
       .filter(r => r.position <= 15 && r.impressions >= 50 && r.ctr < 0.02)
       .sort((a, b) => b.impressions - a.impressions)
       .slice(0, 25);
 
-    res.json({ configured: true, range: 'Last 90 days', striking, lostclicks });
+    res.json({ configured: true, signedIn: true, range: 'Last 90 days', striking, lostclicks });
   } catch (e) {
     console.error('Search Console query failed:', e.message);
-    res.json({ configured: false, error: e.message });
+    res.json({ configured: false, signedIn: true, error: e.message });
   }
 });
 
@@ -269,7 +331,6 @@ app.get('/healthz', (req, res) => res.send('ok'));
 
 app.listen(PORT, () => {
   console.log('Earl Kendrick dashboard running on port ' + PORT);
-  console.log('Google Analytics ' + (analyticsReady ? 'connected' : 'not configured'));
-  console.log('Search Console ' + (gscReady ? 'connected' : 'not configured'));
+  console.log('Google OAuth ' + (oauthConfigured() ? 'configured' : 'not configured'));
   console.log('Counter page generator ' + (process.env.ANTHROPIC_API_KEY ? 'ready' : 'no key set'));
 });
