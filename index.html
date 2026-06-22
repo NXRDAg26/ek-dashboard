@@ -238,6 +238,15 @@
   .gen-preview strong{color:var(--text)}
   .gen-loading{padding:20px;font-size:13px;color:var(--muted)}
   @media(max-width:980px){.gen-layout{grid-template-columns:1fr}}
+  /* google sign in */
+  .btn-google{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);color:var(--text);border:1px solid var(--border-strong);font-family:var(--body);font-weight:600;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer;text-decoration:none;transition:.16s}
+  .btn-google:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-google.in{color:var(--muted);font-weight:500}
+  .signin-cta{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:22px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px}
+  .signin-cta .t{font-family:var(--display);font-weight:600;font-size:15px;color:var(--text)}
+  .signin-cta .d{font-size:13px;color:var(--muted);line-height:1.6;max-width:560px}
+  .signin-cta a{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#0a0a0b;font-family:var(--display);font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;text-decoration:none;transition:.16s}
+  .signin-cta a:hover{filter:brightness(1.06)}
 </style>
 </head>
 <body>
@@ -258,6 +267,7 @@
   </nav>
   <div class="topbar-right">
     <span class="save-state"><span class="save-dot" id="save-dot"></span><span id="save-text">Saved</span></span>
+    <a class="btn-google" id="auth-btn" href="/auth/login">Sign in for Analytics</a>
     <button class="btn-primary" onclick="generateReport(this)">Generate report</button>
   </div>
 </div>
@@ -683,9 +693,15 @@ function renderAnalytics(a){
   const stats=document.getElementById('ga-stats'),chart=document.getElementById('ga-chart');
   const chartWrap=chart.parentElement;
   if(!a||!a.configured){
-    dot.className='ga-dot';status.textContent='Not connected';
+    dot.className='ga-dot';
     chartWrap.style.display='none';
-    stats.outerHTML='<div class="ga-empty" id="ga-stats"><div class="t">Google Analytics is not connected yet</div><div class="d">Add <code>GA_PROPERTY_ID</code> and <code>GOOGLE_CREDENTIALS_JSON</code> in Render and this block goes live with real sessions and users. No figures are shown until then so nothing here is invented.</div></div>';
+    if(a && a.signedIn===false){
+      status.textContent='Sign in required';
+      stats.outerHTML='<div class="signin-cta" id="ga-stats"><div class="t">Sign in to see live analytics</div><div class="d">Connect with the Google account that has access to the Earl Kendrick GA4 property. Sessions and users for the last 90 days appear here straight away. Nothing is shown until you sign in, so no figures are invented.</div><a href="/auth/login">Sign in with Google</a></div>';
+    }else{
+      status.textContent='Not connected';
+      stats.outerHTML='<div class="ga-empty" id="ga-stats"><div class="t">Analytics could not load</div><div class="d">You are signed in but the GA4 property did not return data. Check that <code>GA_PROPERTY_ID</code> is set in Render and that the signed in account has access to that property.'+(a&&a.error?' Detail: '+a.error:'')+'</div></div>';
+    }
     return;
   }
   dot.className='ga-dot live';status.textContent='Live · Google Analytics · '+a.range;
@@ -745,7 +761,11 @@ function switchGap(tab,btn){
 function renderGapList(){
   const list=document.getElementById('gap-list');
   if(!GAPS.configured){
-    list.innerHTML='<div class="gap-empty">Google Search Console is not connected yet. Add <code>GSC_SITE_URL</code> in Render and grant the service account access to the Earl Kendrick property, then live gaps appear here. You can still type any topic on the right and generate a page.</div>';
+    if(GAPS.signedIn===false){
+      list.innerHTML='<div class="gap-empty">Sign in with Google to pull live Search Console gaps for the Earl Kendrick property. You can still type any topic on the right and generate a page without signing in.</div>';
+    }else{
+      list.innerHTML='<div class="gap-empty">Signed in, but Search Console returned no data. Check that <code>GSC_SITE_URL</code> is set in Render and that the signed in account has access to that property. You can still type any topic on the right and generate a page.</div>';
+    }
     return;
   }
   const rows=GAPS[GAP_TAB]||[];
@@ -757,8 +777,9 @@ async function loadGaps(){
   try{
     const r=await fetch('/api/searchconsole/gaps');
     const d=await r.json();
-    GAPS={striking:d.striking||[],lostclicks:d.lostclicks||[],configured:!!d.configured};
+    GAPS={striking:d.striking||[],lostclicks:d.lostclicks||[],configured:!!d.configured,signedIn:d.signedIn};
     if(d.configured){dot.className='ga-dot live';status.textContent='Live · Search Console · '+(d.range||'90 days');}
+    else if(d.signedIn===false){dot.className='ga-dot';status.textContent='Sign in required';}
     else{dot.className='ga-dot';status.textContent='Not connected';}
   }catch(e){GAPS.configured=false;dot.className='ga-dot';status.textContent='Not connected';}
   renderGapList();
@@ -799,10 +820,40 @@ function copyPageHtml(btn){
   navigator.clipboard.writeText(LAST_HTML).then(()=>{const t=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=t,1400);});
 }
 
+/* google sign in state */
+let AUTH={oauthConfigured:false,signedIn:false,email:null};
+function renderAuthControl(){
+  const btn=document.getElementById('auth-btn');
+  if(!btn)return;
+  if(AUTH.signedIn){
+    btn.classList.add('in');
+    btn.textContent=AUTH.email?('Sign out · '+AUTH.email):'Sign out';
+    btn.href='#';
+    btn.onclick=signOut;
+  }else{
+    btn.classList.remove('in');
+    btn.textContent='Sign in for Analytics';
+    btn.href='/auth/login';
+    btn.onclick=null;
+  }
+}
+async function initAuth(){
+  try{const r=await fetch('/api/auth/status');AUTH=await r.json();}
+  catch(e){AUTH={oauthConfigured:false,signedIn:false,email:null};}
+  renderAuthControl();
+}
+async function signOut(e){
+  if(e)e.preventDefault();
+  try{await fetch('/auth/logout',{method:'POST'});}catch(err){}
+  location.reload();
+}
+
 /* init */
 (async function(){
   await loadState();
-  renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();renderCompetition();renderGenComps();loadAnalytics();loadGaps();
+  await initAuth();
+  renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();renderCompetition();renderGenComps();
+  loadAnalytics();loadGaps();
 })();
 </script>
 </body>
