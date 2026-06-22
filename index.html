@@ -353,6 +353,20 @@
   .ideas-load{font-size:13px;color:var(--muted);padding:6px 0}
   @media(max-width:760px){.plan-grid{grid-template-columns:1fr}.mom-grid{grid-template-columns:1fr 1fr}}
   @media(max-width:480px){.mom-grid{grid-template-columns:1fr}}
+  /* page audit */
+  .audit-row{display:flex;gap:10px;flex-wrap:wrap}
+  .audit-row .gen-input{flex:1;min-width:220px}
+  .audit-hint{font-size:12px;color:var(--muted-2);margin-top:10px}
+  .audit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px}
+  .audit-head .au-l{min-width:0}
+  .audit-head .au-url{font-size:12px;color:var(--accent);word-break:break-all}
+  .audit-head .au-sum{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:6px;max-width:640px}
+  .audit-head .au-r{display:flex;align-items:center;gap:14px;flex-shrink:0}
+  .au-prog{display:flex;align-items:center;gap:10px;min-width:170px}
+  .au-prog .au-track{flex:1;height:7px;background:var(--surface-3);border-radius:999px;overflow:hidden}
+  .au-prog .au-track i{display:block;height:100%;background:var(--accent);border-radius:999px;width:0;transition:width .4s ease}
+  .au-prog span{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .audit-load{font-size:13px;color:var(--muted);padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:16px}
 </style>
 </head>
 <body>
@@ -373,6 +387,7 @@
       <button class="side-link" data-view="seo" onclick="showView('seo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> SEO</button>
       <button class="side-link" data-view="competition" onclick="showView('competition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg> Competition</button>
       <button class="side-link" data-view="counter" onclick="showView('counter')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg> Growth</button>
+      <button class="side-link" data-view="audit" onclick="showView('audit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/><path d="m4 5 1 1 2-2"/><path d="m4 11 1 1 2-2"/><path d="m4 17 1 1 2-2"/></svg> Page audit</button>
     </nav>
     <div class="sidebar-foot">
       <span class="save-state"><span class="save-dot" id="save-dot"></span><span id="save-text">Saved</span></span>
@@ -557,6 +572,7 @@
     <div class="theme-bar">
       <span class="tl">Gap ideas against the theme</span>
       <select id="comp-theme" onchange="setCompTheme(this.value)"></select>
+      <button class="btn-primary" id="gen-all-btn" onclick="generateAllIdeas(this)">Generate ideas</button>
     </div>
     <div class="group-label">Closest match · same target market</div>
     <div class="comp-grid" id="comp-closest"></div>
@@ -604,6 +620,22 @@
       <div class="gen-meta" id="gen-meta"></div>
       <div class="gen-preview" id="gen-preview"></div>
     </div>
+  </section>
+
+  <section class="view" id="audit">
+    <div class="section-head">
+      <span class="eyebrow">Conversion and UX</span>
+      <h2>Page audit</h2>
+      <p class="lead">Check any earlkendrick.com page for layout, UI and call to action improvements. Work through the list and tick each fix as you make it. Ticks save across the dashboard.</p>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="audit-row">
+        <input class="gen-input" id="audit-url" placeholder="https://www.earlkendrick.com/" value="https://www.earlkendrick.com/">
+        <button class="btn-primary" id="audit-btn" onclick="auditPage()">Audit page</button>
+      </div>
+      <div class="audit-hint">Paste the full address of the page you want to improve, then audit it.</div>
+    </div>
+    <div id="audit-output"></div>
   </section>
       <div class="view-foot">
         <div>Earl Kendrick Content and Marketing Plan v2 · <b>Two month theme cycle</b> · Commercial audience focus</div>
@@ -876,7 +908,7 @@ function compCard(c){
     <div class="comp-desc">${c.desc}</div>
     ${c.note?`<div class="comp-note">${c.note}</div>`:''}
     <div class="comp-actions">
-      <button class="btn-ideas" onclick="gapIdeas('${escAttr(c.name)}','${escAttr(c.desc)}','${slug}',this)">Gap ideas vs theme</button>
+      <button class="btn-ideas" onclick="gapIdeas('${escAttr(c.name)}','${escAttr(c.desc)}','${slug}',this)">More angles</button>
       <div class="comp-ideas" id="ideas-${slug}"></div>
     </div>
   </div>`;
@@ -965,6 +997,30 @@ function renderCompThemes(){
   sel.innerHTML=PLAN.map(p=>`<option value="${p.m}" ${p.m===COMP_THEME?'selected':''}>Month ${p.m} · ${p.theme}</option>`).join('');
 }
 function setCompTheme(m){COMP_THEME=parseInt(m,10);}
+function allCompetitors(){return [...COMPETITORS.closest,...COMPETITORS.head,...COMPETITORS.tier];}
+async function generateAllIdeas(btn){
+  const p=PLAN.find(x=>x.m===COMP_THEME)||PLAN[0];
+  const comps=allCompetitors();
+  btn.disabled=true;const label=btn.textContent;btn.textContent='Generating';
+  comps.forEach(c=>{const box=document.getElementById('ideas-'+compSlug(c.name));if(box)box.innerHTML='<div class="ideas-load">Finding a gap against '+p.theme+'</div>';});
+  try{
+    const r=await fetch('/api/gap-ideas-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({theme:p.theme,services:p.services,audience:p.audience,competitors:comps.map(c=>({name:c.name,context:c.desc}))})});
+    const d=await r.json();
+    if(!d.ok||!Array.isArray(d.ideas)){comps.forEach(c=>{const box=document.getElementById('ideas-'+compSlug(c.name));if(box)box.innerHTML='<div class="ideas-load">'+escapeHtml((d&&d.error)||'No ideas returned')+'</div>';});btn.disabled=false;btn.textContent=label;return;}
+    comps.forEach((c,i)=>{
+      const idea=d.ideas[i]||d.ideas.find(x=>x&&x.competitor&&x.competitor.toLowerCase().includes(c.name.toLowerCase().slice(0,8)));
+      const box=document.getElementById('ideas-'+compSlug(c.name));if(!box)return;
+      if(!idea){box.innerHTML='<div class="ideas-load">No idea returned for this one. Try More angles.</div>';return;}
+      box.innerHTML=`<div class="idea">
+        <div class="idea-gap">${escapeHtml(idea.gap||'')}</div>
+        <div class="idea-why">${escapeHtml(idea.why||'')}</div>
+        <div class="idea-angle"><b>Angle:</b> ${escapeHtml(idea.angle||'')}</div>
+        ${idea.query?`<button class="idea-use" onclick="useIdea('${escAttr(idea.query)}','${escAttr(c.name)}')">Build counter page</button>`:''}
+      </div>`;
+    });
+    btn.textContent='Regenerate ideas';btn.disabled=false;toast('Ideas ready for each competitor');
+  }catch(e){comps.forEach(c=>{const box=document.getElementById('ideas-'+compSlug(c.name));if(box)box.innerHTML='<div class="ideas-load">Request failed</div>';});btn.disabled=false;btn.textContent=label;}
+}
 async function gapIdeas(name,desc,slug,btn){
   const p=PLAN.find(x=>x.m===COMP_THEME)||PLAN[0];
   const box=document.getElementById('ideas-'+slug);
@@ -991,6 +1047,63 @@ function useIdea(query,competitor){
   document.querySelectorAll('.gen-chip').forEach(c=>c.classList.toggle('on',c.getAttribute('data-name')===competitor));
   const out=document.getElementById('gen-query');if(out)out.focus();
   toast('Loaded into the generator');
+}
+
+/* ---- page audit ---- */
+let AUDIT=null;
+function auditUrlSlug(){return (AUDIT&&AUDIT.url?AUDIT.url:'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);}
+async function auditPage(){
+  const url=document.getElementById('audit-url').value.trim();
+  if(!url){document.getElementById('audit-url').focus();return;}
+  const btn=document.getElementById('audit-btn');const out=document.getElementById('audit-output');
+  btn.disabled=true;const label=btn.textContent;btn.textContent='Auditing';
+  out.innerHTML='<div class="audit-load">Loading the page and checking layout, UI and calls to action. This can take up to a minute.</div>';
+  try{
+    const r=await fetch('/api/page-audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const d=await r.json();
+    if(!d.ok){out.innerHTML='<div class="audit-load">Could not audit that page. '+escapeHtml(d.error||'Unknown error')+'</div>';btn.disabled=false;btn.textContent=label;return;}
+    if(!d.groups||!d.groups.length){out.innerHTML='<div class="audit-load">No structured checklist returned. Try again.</div>';btn.disabled=false;btn.textContent=label;return;}
+    AUDIT={url:d.url,title:d.title||'',summary:d.summary||'',groups:d.groups};
+    renderAudit();toast('Audit ready');
+  }catch(e){out.innerHTML='<div class="audit-load">Request failed. '+escapeHtml(e.message)+'</div>';}
+  btn.disabled=false;btn.textContent=label;
+}
+function auditItems(){
+  const ids=[];if(!AUDIT)return ids;const s=auditUrlSlug();
+  AUDIT.groups.forEach((g,gi)=>(g.items||[]).forEach((t,i)=>ids.push('audit-'+s+'-'+gi+'-'+i)));
+  return ids;
+}
+function renderAudit(){
+  const out=document.getElementById('audit-output');if(!AUDIT){out.innerHTML='';return;}
+  const s=auditUrlSlug();
+  const all=auditItems(),done=all.filter(id=>tasksDone.has(id)).length;
+  const pct=all.length?Math.round(done/all.length*100):0;
+  const grid=AUDIT.groups.map((g,gi)=>{
+    const items=g.items||[];
+    const gdone=items.filter((t,i)=>tasksDone.has('audit-'+s+'-'+gi+'-'+i)).length;
+    const rows=items.map((t,i)=>{
+      const id='audit-'+s+'-'+gi+'-'+i;const on=tasksDone.has(id);
+      return `<div class="task ${on?'done':''}" onclick="toggleAuditTask('${id}')">
+        <div class="task-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg></div>
+        <div class="task-text">${escapeHtml(t)}</div></div>`;
+    }).join('');
+    return `<div class="plan-ch"><div class="plan-ch-head"><div class="plan-ch-title">${escapeHtml(g.name||'Improvements')}</div><div class="plan-ch-count">${gdone} of ${items.length}</div></div>${rows}</div>`;
+  }).join('');
+  out.innerHTML=`<div class="audit-head">
+      <div class="au-l"><div class="au-url">${escapeHtml(AUDIT.url)}</div><div class="au-sum">${escapeHtml(AUDIT.summary||'')}</div></div>
+      <div class="au-r"><div class="au-prog"><div class="au-track"><i style="width:${pct}%"></i></div><span>${done} of ${all.length}</span></div><button class="btn-copy" onclick="copyAudit(this)">Copy list</button></div>
+    </div>
+    <div class="plan-grid">${grid}</div>`;
+}
+function toggleAuditTask(id){
+  if(tasksDone.has(id))tasksDone.delete(id);else tasksDone.add(id);
+  renderAudit();persist();
+}
+function copyAudit(btn){
+  if(!AUDIT)return;
+  const lines=[AUDIT.url,''];
+  AUDIT.groups.forEach(g=>{lines.push(g.name);(g.items||[]).forEach(t=>lines.push('[ ] '+t));lines.push('');});
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{const t=btn.textContent;btn.textContent='Copied';toast('Audit list copied');setTimeout(()=>btn.textContent=t,1400);});
 }
 
 /* analytics */
@@ -1138,7 +1251,8 @@ const VIEWS={
   email:{title:'Email',sub:'Sends awaiting approval'},
   seo:{title:'SEO',sub:'Search and answer engine targets'},
   competition:{title:'Competition',sub:'The competitor landscape'},
-  counter:{title:'Growth',sub:'Live gaps and counter pages'}
+  counter:{title:'Growth',sub:'Live gaps and counter pages'},
+  audit:{title:'Page audit',sub:'UI and CTA improvements for earlkendrick.com'}
 };
 function showView(id){
   if(!VIEWS[id])id='focus';
