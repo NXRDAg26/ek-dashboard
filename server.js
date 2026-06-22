@@ -379,6 +379,140 @@ app.post('/api/gap-ideas', async (req, res) => {
   }
 });
 
+/* ---------- Anthropic: one idea against every competitor at once ---------- */
+app.post('/api/gap-ideas-batch', async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(400).json({ ok: false, error: 'No ANTHROPIC_API_KEY set in Render' });
+
+  const theme = (req.body && req.body.theme ? String(req.body.theme) : '').trim();
+  const services = (req.body && req.body.services ? String(req.body.services) : '').trim();
+  const audience = (req.body && req.body.audience ? String(req.body.audience) : '').trim();
+  const competitors = Array.isArray(req.body && req.body.competitors) ? req.body.competitors : [];
+  if (!theme || !competitors.length) return res.status(400).json({ ok: false, error: 'A theme and competitors are required' });
+
+  const system = [
+    'You advise Earl Kendrick, a UK building surveying and property consultancy, on how to win search and content ground from named competitors.',
+    'For the current monthly theme, give one strong content gap idea against each competitor in the list.',
+    'House style: UK English. No hyphens. No em dashes. No emojis. Consultative and direct.',
+    'Return only a single JSON object, no markdown fences, with one key: ideas, an array in the SAME ORDER as the competitors given.',
+    'Each array item has: competitor the exact name, gap a short phrase, why one sentence on why it beats this competitor on this theme, angle a concrete Earl Kendrick page or post title, query a short search phrase to target.'
+  ].join('\n');
+
+  const list = competitors.map((c, i) => (i + 1) + '. ' + c.name + (c.context ? ' (' + c.context + ')' : '')).join('\n');
+  const userMsg = [
+    'Current theme: ' + theme,
+    services ? 'Theme services: ' + services : '',
+    audience ? 'Theme audience: ' + audience : '',
+    'Competitors, in order:',
+    list,
+    'Return exactly one idea per competitor, in the same order.'
+  ].filter(Boolean).join('\n');
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: GEN_MODEL, max_tokens: 3000, system, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await r.json();
+    if (data.error) return res.status(500).json({ ok: false, error: data.error.message || 'Anthropic API error' });
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    let parsed = null;
+    try {
+      const clean = text.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+      parsed = JSON.parse(clean);
+    } catch (e) { return res.json({ ok: true, ideas: null, raw: text }); }
+    res.json({ ok: true, ideas: parsed.ideas || [] });
+  } catch (e) {
+    console.error('Batch gap ideas failed:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ---------- page audit: fetch a page and return UI and CTA fixes ---------- */
+function extractPage(html) {
+  const pick = re => { const m = html.match(re); return m ? m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : ''; };
+  const all = (re, cap) => { const out = []; let m; while ((m = re.exec(html)) && out.length < 40) out.push(m[cap].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()); return out.filter(Boolean); };
+  const title = pick(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const metaDesc = (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i) || [])[1] || '';
+  const h1 = all(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, 1);
+  const h2 = all(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, 1);
+  const h3 = all(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, 1);
+  const links = all(/<a[^>]*>([\s\S]*?)<\/a>/gi, 1);
+  const buttons = all(/<button[^>]*>([\s\S]*?)<\/button>/gi, 1);
+  const forms = (html.match(/<form[\b]/gi) || []).length;
+  const imgs = (html.match(/<img[\b ]/gi) || []).length;
+  const imgsAlt = (html.match(/<img[^>]+alt=["'][^"']+["']/gi) || []).length;
+  const words = (html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split(' ').length);
+  return { title, metaDesc, h1, h2, h3, links: links.slice(0, 30), buttons, forms, imgs, imgsAlt, words };
+}
+
+app.post('/api/page-audit', async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(400).json({ ok: false, error: 'No ANTHROPIC_API_KEY set in Render' });
+  let url = (req.body && req.body.url ? String(req.body.url) : '').trim();
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  try { new URL(url); } catch (e) { return res.status(400).json({ ok: false, error: 'That does not look like a valid URL' }); }
+
+  let page = null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 12000);
+    const r = await fetch(url, { signal: ctrl.signal, headers: { 'user-agent': 'EK-Dashboard-Audit/1.0' } });
+    clearTimeout(t);
+    if (!r.ok) return res.status(400).json({ ok: false, error: 'The page returned status ' + r.status });
+    const html = await r.text();
+    page = extractPage(html);
+  } catch (e) {
+    return res.status(400).json({ ok: false, error: 'Could not load that page. ' + e.message });
+  }
+
+  const system = [
+    'You are a senior conversion and UX strategist auditing a single web page for Earl Kendrick, a UK building surveying and property consultancy.',
+    'You are given a structured extract of the page. Produce a practical improvement checklist a non technical person can work through and tick off.',
+    'Focus on what the page can control: layout and UI, calls to action, content and clarity, trust and proof, SEO and AEO, and accessibility.',
+    'Each item must be one specific action, written so it can be ticked when done. Avoid vague advice.',
+    'House style: UK English. No hyphens. No em dashes. No emojis. Direct and plain.',
+    'Return only a single JSON object, no markdown fences, with keys:',
+    'title the page title, summary one sentence on the pages main weakness, groups an array of objects each with name a group label and items an array of short action strings. Use 4 to 6 groups, 3 to 6 items each.'
+  ].join('\n');
+
+  const userMsg = [
+    'Page URL: ' + url,
+    'Title: ' + (page.title || 'none'),
+    'Meta description: ' + (page.metaDesc || 'none'),
+    'H1 headings: ' + (page.h1.join(' | ') || 'none'),
+    'H2 headings: ' + (page.h2.slice(0, 12).join(' | ') || 'none'),
+    'H3 headings: ' + (page.h3.slice(0, 12).join(' | ') || 'none'),
+    'Link and nav text samples: ' + (page.links.join(' | ') || 'none'),
+    'Button text: ' + (page.buttons.join(' | ') || 'none'),
+    'Forms on page: ' + page.forms,
+    'Images: ' + page.imgs + ', with alt text: ' + page.imgsAlt,
+    'Approximate word count: ' + page.words,
+    'Audit this page and return the improvement checklist.'
+  ].join('\n');
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: GEN_MODEL, max_tokens: 3000, system, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await r.json();
+    if (data.error) return res.status(500).json({ ok: false, error: data.error.message || 'Anthropic API error' });
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    let parsed = null;
+    try {
+      const clean = text.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+      parsed = JSON.parse(clean);
+    } catch (e) { return res.json({ ok: true, audit: null, raw: text, url }); }
+    res.json({ ok: true, url, title: parsed.title || page.title, summary: parsed.summary || '', groups: parsed.groups || [] });
+  } catch (e) {
+    console.error('Page audit failed:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 /* ---------- routes ---------- */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
