@@ -629,6 +629,14 @@ app.post('/api/state', (req, res) => {
 
 app.get('/healthz', (req, res) => res.send('ok'));
 
+// Optional self keep warm to reduce cold starts on the Render free plan.
+// Set KEEP_WARM=true and BASE_URL to your public url to enable it.
+if (process.env.KEEP_WARM === 'true' && process.env.BASE_URL) {
+  const pingUrl = process.env.BASE_URL.replace(/\/$/, '') + '/healthz';
+  setInterval(() => { fetch(pingUrl).catch(() => {}); }, 10 * 60 * 1000);
+  console.log('Keep warm enabled, pinging ' + pingUrl + ' every 10 minutes');
+}
+
 app.listen(PORT, () => {
   console.log('Earl Kendrick dashboard running on port ' + PORT);
   console.log('Google OAuth ' + (oauthConfigured() ? 'configured' : 'not configured'));
