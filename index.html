@@ -367,6 +367,19 @@
   .au-prog .au-track i{display:block;height:100%;background:var(--accent);border-radius:999px;width:0;transition:width .4s ease}
   .au-prog span{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
   .audit-load{font-size:13px;color:var(--muted);padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:16px}
+  /* blog keywords and editing */
+  .blog-task{align-items:flex-start}
+  .blog-main{flex:1;min-width:0}
+  .blog-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .blog-edit{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--body);font-size:11px;padding:3px 10px;border-radius:7px;cursor:pointer;flex-shrink:0;transition:.15s}
+  .blog-edit:hover{color:var(--text);border-color:var(--border-strong)}
+  .kw-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .kw-chip{font-size:11px;color:var(--accent);background:var(--accent-soft);border:1px solid rgba(201,247,61,0.2);border-radius:999px;padding:3px 9px;line-height:1.4}
+  .blog-input{width:100%;background:var(--surface-3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--body);font-size:13px;padding:8px 10px;outline:none;margin-bottom:8px}
+  .blog-input:focus{border-color:var(--accent)}
+  .blog-btns{display:flex;gap:8px}
+  .blog-btns button{font-family:var(--body);font-weight:600;font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong);background:transparent;color:var(--text);transition:.15s}
+  .blog-btns button.save{background:var(--accent);color:#0a0a0b;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -739,6 +752,37 @@ const PLAN=[
    li:["Education: What makes surveying a listed building different?","Director: Why heritage buildings deserve a different level of care","Poll: Have you worked on a listed or conservation project?","Education: What is listed building consent and when you need it","Case study: Restoring a Grade II listed building in London","Commercial: Heritage surveying and listed building consultancy","Education: Conservation areas, restrictions explained","Director: The biggest misconception about listed buildings","Engagement: Most challenging part of heritage constraints?","Education: Historic building materials and the wrong choices","Case study: Church conversion, navigating heritage complexity","Commercial: Working on a heritage project? Talk to EK specialists","Roundup: 7 month content roundup from Earl Kendrick"]}
 ];
 const PLAN_CHANNELS=[["blogs","Blog posts"],["cases","Case studies"],["emails","Email campaigns"],["li","LinkedIn posts"]];
+/* target keywords per blog, from the plan, editable per blog */
+const BLOG_KW={
+  "m1-blogs-0":["Building Safety Act 2025","BSA compliance UK"],
+  "m1-blogs-1":["Building Safety Case Report","BSCR required","higher risk buildings"],
+  "m1-blogs-2":["BSA compliance mistakes","building safety case errors"],
+  "m1-blogs-3":["higher risk buildings UK","HRB definition","accountable person BSA"],
+  "m2-blogs-0":["cost consultancy UK","project cost planning","quantity surveying"],
+  "m2-blogs-1":["development cost planning","hidden construction costs","QS advice"],
+  "m2-blogs-2":["project consultant UK","construction project management"],
+  "m2-blogs-3":["when to appoint project manager","early project consultancy"],
+  "m3-blogs-0":["technical due diligence property UK","pre acquisition survey"],
+  "m3-blogs-1":["building survey UK","what does a building survey include","RICS survey"],
+  "m3-blogs-2":["building defect analysis","understanding survey report","structural defects property"],
+  "m3-blogs-3":["why get a building survey","pre purchase survey cost","survey before buying"],
+  "m4-blogs-0":["interior design consultancy UK","architectural design services","building refurbishment design"],
+  "m4-blogs-1":["commercial interior design UK","office refurbishment design","workplace design value"],
+  "m4-blogs-2":["building regulations renovation UK","planning permission interior works","compliant design"],
+  "m4-blogs-3":["when to appoint architect","architectural designer refurbishment","design consultant UK"],
+  "m5-blogs-0":["fire safety obligations UK","building owner fire safety","post Grenfell legislation"],
+  "m5-blogs-1":["EWS1 form UK","external wall survey","EWS1 mortgage"],
+  "m5-blogs-2":["fire risk assessment portfolio","managing FRA large portfolio"],
+  "m5-blogs-3":["responsible person fire safety act","fire safety legal obligations","FSO 2005"],
+  "m6-blogs-0":["dilapidations UK","commercial dilapidations","landlord tenant obligations"],
+  "m6-blogs-1":["challenge dilapidations claim","tenant dilapidations advice UK"],
+  "m6-blogs-2":["end of lease planning","lease expiry dilapidations","commercial lease exit"],
+  "m6-blogs-3":["schedule of condition UK","dilapidations schedule","lease condition survey"],
+  "m7-blogs-0":["listed building survey UK","surveying listed buildings","Grade II survey"],
+  "m7-blogs-1":["conservation area development UK","works in conservation area","planning restrictions"],
+  "m7-blogs-2":["heritage building surveyor UK","restoration project surveyor","historic building advice"],
+  "m7-blogs-3":["listed building consent UK","LBC vs planning permission","listed building works"]
+};
 
 /* ---- LinkedIn month on month, editable ---- */
 const LI_MOM=[
@@ -756,6 +800,8 @@ let liMomState={};
 let momEditing=false;
 let PLAN_MONTH=1;
 let COMP_THEME=1;
+let editingBlog=null;
+let blogEdits={};
 
 function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setSave(s){
@@ -773,13 +819,14 @@ async function loadState(){
     if(Array.isArray(s.approved))approved=new Set(s.approved);
     if(Array.isArray(s.tasks))tasksDone=new Set(s.tasks);
     if(s.liMom&&typeof s.liMom==='object')liMomState=s.liMom;
+    if(s.blogEdits&&typeof s.blogEdits==='object')blogEdits=s.blogEdits;
     online=true;setSave('saved');
   }catch(e){online=false;setSave('offline');}
 }
 function buildPayload(){
   const kpis={};
   allKpis().forEach(k=>kpis[k.id]={cur:k.cur,tgt:k.tgt});
-  return {kpis,approved:[...approved],tasks:[...tasksDone],liMom:liMomState};
+  return {kpis,approved:[...approved],tasks:[...tasksDone],liMom:liMomState,blogEdits:blogEdits};
 }
 async function persist(){
   if(!online){setSave('offline');return;}
@@ -931,18 +978,43 @@ function planItems(p){
   PLAN_CHANNELS.forEach(([key])=>{(p[key]||[]).forEach((t,i)=>out.push('m'+p.m+'-'+key+'-'+i));});
   return out;
 }
+function blogTitle(id,def){return (blogEdits[id]&&blogEdits[id].title!=null)?blogEdits[id].title:def;}
+function blogKeywords(id){return (blogEdits[id]&&Array.isArray(blogEdits[id].kw))?blogEdits[id].kw:(BLOG_KW[id]||[]);}
+function blogRow(p,t,i){
+  const id='m'+p.m+'-blogs-'+i;const on=tasksDone.has(id);
+  const title=blogTitle(id,t),kw=blogKeywords(id);
+  if(editingBlog===id){
+    return `<div class="task blog-task editing">
+      <div class="blog-main">
+        <input class="blog-input" id="blog-t-${id}" value="${escapeHtml(title).replace(/"/g,'&quot;')}" placeholder="Blog title">
+        <input class="blog-input" id="blog-k-${id}" value="${escapeHtml(kw.join(', ')).replace(/"/g,'&quot;')}" placeholder="Keywords, comma separated">
+        <div class="blog-btns"><button class="save" onclick="saveBlog('${id}')">Save</button><button onclick="cancelBlog()">Cancel</button></div>
+      </div></div>`;
+  }
+  return `<div class="task blog-task ${on?'done':''}">
+    <div class="task-box" onclick="toggleTask('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg></div>
+    <div class="blog-main">
+      <div class="blog-title-row"><div class="task-text">${escapeHtml(title)}</div><button class="blog-edit" onclick="editBlog('${id}')">Edit</button></div>
+      ${kw.length?`<div class="kw-chips">${kw.map(k=>`<span class="kw-chip">${escapeHtml(k)}</span>`).join('')}</div>`:''}
+    </div></div>`;
+}
 function renderPlan(){
   const p=planMonth();
   const grid=document.getElementById('plan-grid');
   grid.innerHTML=PLAN_CHANNELS.map(([key,label])=>{
     const items=p[key]||[];
     const done=items.filter((t,i)=>tasksDone.has('m'+p.m+'-'+key+'-'+i)).length;
-    const rows=items.map((t,i)=>{
-      const id='m'+p.m+'-'+key+'-'+i;const on=tasksDone.has(id);
-      return `<div class="task ${on?'done':''}" onclick="toggleTask('${id}')">
-        <div class="task-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg></div>
-        <div class="task-text">${t}</div></div>`;
-    }).join('');
+    let rows;
+    if(key==='blogs'){
+      rows=items.map((t,i)=>blogRow(p,t,i)).join('');
+    }else{
+      rows=items.map((t,i)=>{
+        const id='m'+p.m+'-'+key+'-'+i;const on=tasksDone.has(id);
+        return `<div class="task ${on?'done':''}" onclick="toggleTask('${id}')">
+          <div class="task-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg></div>
+          <div class="task-text">${t}</div></div>`;
+      }).join('');
+    }
     return `<div class="plan-ch">
       <div class="plan-ch-head"><div class="plan-ch-title">${label}</div><div class="plan-ch-count">${done} of ${items.length}</div></div>
       ${rows}</div>`;
@@ -950,6 +1022,15 @@ function renderPlan(){
   const all=planItems(p),doneAll=all.filter(id=>tasksDone.has(id)).length;
   document.getElementById('plan-prog-text').textContent=doneAll+' of '+all.length;
   document.getElementById('plan-prog-bar').style.width=(all.length?Math.round(doneAll/all.length*100):0)+'%';
+}
+function editBlog(id){editingBlog=id;renderPlan();}
+function cancelBlog(){editingBlog=null;renderPlan();}
+function saveBlog(id){
+  const ti=document.getElementById('blog-t-'+id),ki=document.getElementById('blog-k-'+id);
+  const title=ti?ti.value.trim():'';
+  const kw=ki?ki.value.split(',').map(s=>s.trim()).filter(Boolean):[];
+  blogEdits[id]={title:title,kw:kw};
+  editingBlog=null;renderPlan();persist();toast('Blog updated');
 }
 function toggleTask(id){
   if(tasksDone.has(id))tasksDone.delete(id);else tasksDone.add(id);
