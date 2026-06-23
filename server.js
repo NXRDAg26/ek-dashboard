@@ -33,7 +33,7 @@ const DATA_FILE = path.join(__dirname, 'state.json');
 app.use(express.json({ limit: '1mb' }));
 
 /* ---------- saved figures and approvals ---------- */
-function defaultState() { return { kpis: {}, approved: [], tasks: [], liMom: {}, blogEdits: {} }; }
+function defaultState() { return { kpis: {}, approved: [], tasks: [], liMom: {}, blogEdits: {}, postDrafts: {} }; }
 function readState() {
   try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
   catch (e) { return defaultState(); }
@@ -513,6 +513,102 @@ app.post('/api/page-audit', async (req, res) => {
   }
 });
 
+/* ---------- LinkedIn live data, organization analytics ---------- */
+// Needs an approved LinkedIn Community Management app. Set in Render:
+//   LINKEDIN_ACCESS_TOKEN  a token with r_organization_social and the
+//                          organization analytics scopes for the EK page
+//   LINKEDIN_ORG_ID        the numeric organization id, eg 1234567
+//   LINKEDIN_VERSION       optional, the API version like 202401
+const LI_VERSION = process.env.LINKEDIN_VERSION || '202401';
+function liHeaders(token) {
+  return { Authorization: 'Bearer ' + token, 'LinkedIn-Version': LI_VERSION, 'X-Restli-Protocol-Version': '2.0.0' };
+}
+function monthRangeMs(offset) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+  const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 1);
+  return { start: start.getTime(), end: Math.min(end.getTime(), Date.now()) };
+}
+app.get('/api/linkedin', async (req, res) => {
+  const token = process.env.LINKEDIN_ACCESS_TOKEN, org = process.env.LINKEDIN_ORG_ID;
+  if (!token || !org) return res.json({ configured: false });
+  const orgUrn = 'urn:li:organization:' + org;
+  const out = { configured: true };
+  try {
+    try {
+      const r = await fetch('https://api.linkedin.com/rest/networkSizes/' + encodeURIComponent(orgUrn) + '?edgeType=CompanyFollowedByMember', { headers: liHeaders(token) });
+      if (r.ok) { const d = await r.json(); if (d.firstDegreeSize != null) out.followers = d.firstDegreeSize; }
+    } catch (e) { /* follower count optional */ }
+
+    async function shareStats(off) {
+      const { start, end } = monthRangeMs(off);
+      const url = 'https://api.linkedin.com/rest/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=' + encodeURIComponent(orgUrn) +
+        '&timeIntervals.timeGranularityType=MONTH&timeIntervals.timeRange.start=' + start + '&timeIntervals.timeRange.end=' + end;
+      const r = await fetch(url, { headers: liHeaders(token) });
+      if (!r.ok) return null;
+      const d = await r.json();
+      return (d.elements && d.elements[0] && d.elements[0].totalShareStatistics) || null;
+    }
+    const cur = await shareStats(0), prev = await shareStats(1);
+    const engRate = v => (v && v.impressionCount) ? (((v.likeCount || 0) + (v.commentCount || 0) + (v.shareCount || 0) + (v.clickCount || 0)) / v.impressionCount) * 100 : 0;
+    if (cur) {
+      out.impressions = { now: cur.impressionCount || 0, last: prev ? (prev.impressionCount || 0) : 0 };
+      out.engagement = { now: Math.round(engRate(cur) * 10) / 10, last: prev ? Math.round(engRate(prev) * 10) / 10 : 0 };
+      out.comments = { now: cur.commentCount || 0, last: prev ? (prev.commentCount || 0) : 0 };
+    }
+    if (out.followers == null && !cur) return res.json({ configured: false, error: 'No data returned. Check the token scopes and organization id.' });
+    res.json(out);
+  } catch (e) {
+    console.error('LinkedIn query failed:', e.message);
+    res.json({ configured: false, error: e.message });
+  }
+});
+
+/* ---------- NXRD copywriter, pre write a LinkedIn post ---------- */
+app.post('/api/write-post', async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(400).json({ ok: false, error: 'No ANTHROPIC_API_KEY set in Render' });
+  const subject = (req.body && req.body.subject ? String(req.body.subject) : '').trim();
+  const theme = (req.body && req.body.theme ? String(req.body.theme) : '').trim();
+  const audience = (req.body && req.body.audience ? String(req.body.audience) : '').trim();
+  if (!subject) return res.status(400).json({ ok: false, error: 'A post subject is required' });
+
+  const system = [
+    'You are the NXRD copywriter, writing a LinkedIn post for Earl Kendrick, a UK building surveying and property consultancy.',
+    'Voice rules, follow every one without exception:',
+    'No hyphens anywhere. No em dashes. No emojis. No bullet point lists. No filler phrases.',
+    'Every sentence earns its place. If it does not add something, cut it.',
+    'Open with a statement, not a question. Hook the reader on the problem before offering the solution.',
+    'Commercial weight behind every claim, with sector specificity over generic assertions.',
+    'Confident without being arrogant, the expert in the room not the loudest voice.',
+    'End with direction, a clear next step, not decoration.',
+    'UK English throughout. Length 120 to 220 words.',
+    'Write only the post text, no preamble and no labels. You may add up to three relevant hashtags on the final line.'
+  ].join('\n');
+
+  const userMsg = [
+    'Post subject and angle: ' + subject,
+    theme ? 'Monthly theme: ' + theme : '',
+    audience ? 'Audience: ' + audience : '',
+    'Write the LinkedIn post.'
+  ].filter(Boolean).join('\n');
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: GEN_MODEL, max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await r.json();
+    if (data.error) return res.status(500).json({ ok: false, error: data.error.message || 'Anthropic API error' });
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    res.json({ ok: true, copy: text });
+  } catch (e) {
+    console.error('Write post failed:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 /* ---------- routes ---------- */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
@@ -524,7 +620,8 @@ app.post('/api/state', (req, res) => {
     approved: Array.isArray(body.approved) ? body.approved : [],
     tasks: Array.isArray(body.tasks) ? body.tasks : [],
     liMom: body.liMom && typeof body.liMom === 'object' ? body.liMom : {},
-    blogEdits: body.blogEdits && typeof body.blogEdits === 'object' ? body.blogEdits : {}
+    blogEdits: body.blogEdits && typeof body.blogEdits === 'object' ? body.blogEdits : {},
+    postDrafts: body.postDrafts && typeof body.postDrafts === 'object' ? body.postDrafts : {}
   };
   try { writeState(state); res.json({ ok: true }); }
   catch (e) { res.status(500).json({ ok: false, error: 'Could not save state' }); }
