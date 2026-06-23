@@ -380,6 +380,31 @@
   .blog-btns{display:flex;gap:8px}
   .blog-btns button{font-family:var(--body);font-weight:600;font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--border-strong);background:transparent;color:var(--text);transition:.15s}
   .blog-btns button.save{background:var(--accent);color:#0a0a0b;border-color:var(--accent)}
+  /* linkedin posts and copywriter */
+  .post-intro{font-size:13px;color:var(--muted);line-height:1.55;margin:2px 0 16px}
+  .post-list{display:flex;flex-direction:column;gap:10px}
+  .post{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .post-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .post-subj{font-size:13.5px;color:var(--text);line-height:1.45;font-weight:500;flex:1}
+  .post-status{font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;flex-shrink:0;white-space:nowrap}
+  .post-status.draft{color:var(--amber);background:rgba(245,166,35,0.12)}
+  .post-status.scheduled{color:var(--accent);background:var(--accent-soft)}
+  .post-status.published{color:var(--muted);background:var(--surface-3)}
+  .post-status.empty{color:var(--muted-2);background:var(--surface-3)}
+  .post-copy{font-size:13px;color:var(--muted);line-height:1.6;white-space:pre-wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+  .post-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+  .btn-write{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#0a0a0b;border:none;font-family:var(--display);font-weight:700;font-size:12px;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.15s}
+  .btn-write:hover{filter:brightness(1.06)}
+  .btn-write:disabled{opacity:.6;cursor:default}
+  .btn-edit{display:inline-flex;align-items:center;gap:7px;background:var(--surface-3);color:var(--text);border:1px solid var(--border-strong);font-family:var(--body);font-weight:600;font-size:12px;padding:8px 15px;border-radius:999px;cursor:pointer;transition:.15s}
+  .btn-edit:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-edit svg{width:13px;height:13px}
+  .post-editor{margin-top:13px}
+  .post-textarea{width:100%;min-height:150px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--body);font-size:13px;line-height:1.6;padding:12px 14px;outline:none;resize:vertical}
+  .post-textarea:focus{border-color:var(--accent)}
+  .post-edit-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .post-edit-row select{background:var(--surface-3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--body);font-size:12px;padding:7px 10px;outline:none;cursor:pointer}
+  .post-edit-row .sp{flex:1}
 </style>
 </head>
 <body>
@@ -501,7 +526,10 @@
     <div class="panel" style="margin-bottom:16px">
       <div class="panel-head">
         <div class="panel-title">Month on month</div>
-        <button class="btn-copy" id="mom-edit" onclick="toggleMomEdit(this)">Edit figures</button>
+        <div class="panel-note" style="display:flex;align-items:center;gap:12px">
+          <span class="ga-badge" id="li-badge"><span class="ga-dot" id="li-dot"></span><span id="li-status">Checking connection</span></span>
+          <button class="btn-copy" id="mom-edit" onclick="toggleMomEdit(this)">Edit figures</button>
+        </div>
       </div>
       <div class="mom-grid" id="mom-grid"></div>
     </div>
@@ -538,6 +566,15 @@
         <div class="s"><div class="v">GBP 8.75</div><div class="l">Cost per lead</div></div>
         <div class="s"><div class="v">6</div><div class="l">Direct enquiries</div></div>
       </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head">
+        <div class="panel-title">Posts this month</div>
+        <div class="plan-months" id="li-post-months"></div>
+      </div>
+      <p class="post-intro">Pre write each post with the NXRD copywriter, then edit before it goes out. Drafts and status save across the dashboard.</p>
+      <div class="post-list" id="post-list"></div>
     </div>
   </section>
 
@@ -802,6 +839,10 @@ let PLAN_MONTH=1;
 let COMP_THEME=1;
 let editingBlog=null;
 let blogEdits={};
+let liLive={configured:false};
+let LI_POST_MONTH=1;
+let postDrafts={};
+let editingPost=null;
 
 function getCss(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setSave(s){
@@ -820,13 +861,14 @@ async function loadState(){
     if(Array.isArray(s.tasks))tasksDone=new Set(s.tasks);
     if(s.liMom&&typeof s.liMom==='object')liMomState=s.liMom;
     if(s.blogEdits&&typeof s.blogEdits==='object')blogEdits=s.blogEdits;
+    if(s.postDrafts&&typeof s.postDrafts==='object')postDrafts=s.postDrafts;
     online=true;setSave('saved');
   }catch(e){online=false;setSave('offline');}
 }
 function buildPayload(){
   const kpis={};
   allKpis().forEach(k=>kpis[k.id]={cur:k.cur,tgt:k.tgt});
-  return {kpis,approved:[...approved],tasks:[...tasksDone],liMom:liMomState,blogEdits:blogEdits};
+  return {kpis,approved:[...approved],tasks:[...tasksDone],liMom:liMomState,blogEdits:blogEdits,postDrafts:postDrafts};
 }
 async function persist(){
   if(!online){setSave('offline');return;}
@@ -1040,11 +1082,21 @@ function toggleTask(id){
 /* ---- LinkedIn month on month ---- */
 function momVal(id,field,fallback){const s=liMomState[id];if(s&&s[field]!=null)return s[field];return fallback;}
 function momFmt(v,kind){return kind==='pct'?(Math.round(v*10)/10)+'%':Number(v).toLocaleString();}
+function liveFor(id){
+  if(!liLive.configured)return null;
+  if(id==='followers'&&liLive.followers!=null)return {now:liLive.followers,last:momVal('followers','last',(LI_MOM.find(m=>m.id==='followers')||{}).last||0)};
+  if(id==='impressions'&&liLive.impressions)return liLive.impressions;
+  if(id==='engagement'&&liLive.engagement)return liLive.engagement;
+  if(id==='comments'&&liLive.comments)return liLive.comments;
+  return null;
+}
 function renderMom(){
   const grid=document.getElementById('mom-grid');if(!grid)return;
+  const live=liLive.configured;
   grid.innerHTML=LI_MOM.map(m=>{
-    const last=momVal(m.id,'last',m.last),now=momVal(m.id,'now',m.now);
-    if(momEditing){
+    const lv=liveFor(m.id);
+    const last=lv?lv.last:momVal(m.id,'last',m.last),now=lv?lv.now:momVal(m.id,'now',m.now);
+    if(momEditing&&!live){
       return `<div class="mom-card"><div class="mom-label">${m.label}</div>
         <div class="mom-inputs">
           <div class="f"><label>Last</label><input type="number" step="any" id="mom-${m.id}-last" value="${last}"></div>
@@ -1055,10 +1107,28 @@ function renderMom(){
     const dir=diff>0.05?'up':diff<-0.05?'down':'flat';
     const arrow=dir==='up'?'&#9650;':dir==='down'?'&#9660;':'&#8211;';
     const sign=diff>0?'+':'';
-    return `<div class="mom-card"><div class="mom-label">${m.label}</div>
+    const tag=lv?' <span style="font-size:10px;color:var(--accent)">live</span>':'';
+    return `<div class="mom-card"><div class="mom-label">${m.label}${tag}</div>
       <div class="mom-now">${momFmt(now,m.kind)}</div>
       <div class="mom-foot"><span class="mom-delta ${dir}">${arrow} ${sign}${Math.round(diff*10)/10}%</span><span class="mom-prev">from ${momFmt(last,m.kind)}</span></div></div>`;
   }).join('');
+}
+async function loadLinkedIn(){
+  const dot=document.getElementById('li-dot'),status=document.getElementById('li-status'),edit=document.getElementById('mom-edit');
+  try{
+    const r=await fetch('/api/linkedin');
+    liLive=await r.json();
+  }catch(e){liLive={configured:false};}
+  if(liLive.configured){
+    if(dot)dot.className='ga-dot live';
+    if(status)status.textContent='Live · LinkedIn · this month vs last';
+    if(edit)edit.style.display='none';
+  }else{
+    if(dot)dot.className='ga-dot';
+    if(status)status.textContent='Manual figures';
+    if(edit)edit.style.display='';
+  }
+  renderMom();
 }
 function toggleMomEdit(btn){
   if(momEditing){
@@ -1070,6 +1140,80 @@ function toggleMomEdit(btn){
   }else{
     momEditing=true;btn.textContent='Save figures';renderMom();
   }
+}
+
+/* ---- LinkedIn posts, pre written with the NXRD copywriter ---- */
+function liPostMonth(){return PLAN.find(p=>p.m===LI_POST_MONTH)||PLAN[0];}
+function renderLiPostMonths(){
+  const el=document.getElementById('li-post-months');if(!el)return;
+  el.innerHTML=PLAN.map(p=>`<button class="plan-month ${p.m===LI_POST_MONTH?'active':''}" onclick="setLiPostMonth(${p.m})">M${p.m}</button>`).join('');
+}
+function setLiPostMonth(m){LI_POST_MONTH=m;editingPost=null;renderLiPostMonths();renderPosts();}
+function postId(p,i){return 'm'+p.m+'-li-'+i;}
+function renderPosts(){
+  const wrap=document.getElementById('post-list');if(!wrap)return;
+  const p=liPostMonth();
+  wrap.innerHTML=p.li.map((subj,i)=>{
+    const id=postId(p,i);const d=postDrafts[id]||null;
+    const status=d&&d.status?d.status:'empty';
+    const statusLabel=status==='empty'?'Not written':status;
+    if(editingPost===id){
+      const copy=d&&d.copy?d.copy:'';
+      return `<div class="post">
+        <div class="post-top"><div class="post-subj">${escapeHtml(subj)}</div></div>
+        <div class="post-editor">
+          <textarea class="post-textarea" id="post-ta-${id}" placeholder="Write or paste the post copy">${escapeHtml(copy)}</textarea>
+          <div class="post-edit-row">
+            <select id="post-st-${id}">
+              <option value="Draft" ${status==='Draft'?'selected':''}>Draft</option>
+              <option value="Scheduled" ${status==='Scheduled'?'selected':''}>Scheduled</option>
+              <option value="Published" ${status==='Published'?'selected':''}>Published</option>
+            </select>
+            <span class="sp"></span>
+            <button class="btn-write" onclick="writePost('${id}',${i})">Rewrite with NXRD</button>
+            <button class="btn-edit" onclick="savePost('${id}')">Save</button>
+            <button class="btn-edit" onclick="cancelPost()">Cancel</button>
+          </div>
+        </div></div>`;
+    }
+    return `<div class="post">
+      <div class="post-top">
+        <div class="post-subj">${escapeHtml(subj)}</div>
+        <span class="post-status ${status==='empty'?'empty':status.toLowerCase()}">${statusLabel}</span>
+      </div>
+      ${d&&d.copy?`<div class="post-copy">${escapeHtml(d.copy)}</div>`:''}
+      <div class="post-actions">
+        <button class="btn-write" id="write-${id}" onclick="writePost('${id}',${i})">${d&&d.copy?'Rewrite with NXRD':'Write with NXRD'}</button>
+        <button class="btn-edit" onclick="editPost('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
+        ${d&&d.copy?`<button class="btn-edit" onclick="copyPost('${id}')">Copy</button>`:''}
+      </div></div>`;
+  }).join('');
+}
+async function writePost(id,i){
+  const p=liPostMonth();const subj=p.li[i];
+  const btn=document.getElementById('write-'+id)||document.querySelector('#post-ta-'+id);
+  const trigger=document.getElementById('write-'+id);
+  if(trigger){trigger.disabled=true;trigger.textContent='Writing';}
+  try{
+    const r=await fetch('/api/write-post',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:subj,theme:p.theme,audience:p.audience})});
+    const d=await r.json();
+    if(!d.ok){toast(d.error||'Could not write the post');if(trigger){trigger.disabled=false;trigger.textContent='Write with NXRD';}return;}
+    const prev=postDrafts[id]||{};
+    postDrafts[id]={copy:d.copy,status:prev.status&&prev.status!=='empty'?prev.status:'Draft'};
+    editingPost=id;renderPosts();persist();toast('Post written, ready to edit');
+  }catch(e){toast('Request failed');if(trigger){trigger.disabled=false;trigger.textContent='Write with NXRD';}}
+}
+function editPost(id){editingPost=id;renderPosts();const ta=document.getElementById('post-ta-'+id);if(ta)ta.focus();}
+function cancelPost(){editingPost=null;renderPosts();}
+function savePost(id){
+  const ta=document.getElementById('post-ta-'+id),st=document.getElementById('post-st-'+id);
+  const copy=ta?ta.value:'';const status=st?st.value:'Draft';
+  postDrafts[id]={copy:copy,status:status};
+  editingPost=null;renderPosts();persist();toast('Post saved');
+}
+function copyPost(id){
+  const d=postDrafts[id];if(!d||!d.copy)return;
+  navigator.clipboard.writeText(d.copy).then(()=>toast('Post copied'));
 }
 
 /* ---- competitor gap ideas ---- */
@@ -1406,8 +1550,8 @@ async function signOut(e){
   await loadState();
   await initAuth();
   renderKpis();renderLine();renderGauge();renderMails();updateApprove();renderSeo();renderCompetition();renderGenComps();
-  renderPlanMonths();renderPlan();renderMom();renderCompThemes();
-  loadAnalytics();loadGaps();
+  renderPlanMonths();renderPlan();renderMom();renderCompThemes();renderLiPostMonths();renderPosts();
+  loadAnalytics();loadGaps();loadLinkedIn();
 })();
 </script>
 </body>
