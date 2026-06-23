@@ -851,33 +851,42 @@ function setSave(s){
   tx.textContent=s==='saving'?'Saving':s==='offline'?'Local only':'Saved';
 }
 
+const LS_KEY='ek-dashboard-state-v1';
+function applyState(s){
+  if(!s)return;
+  if(s.kpis){for(const id in s.kpis){const k=findKpi(id);if(k){if(s.kpis[id].cur!=null)k.cur=s.kpis[id].cur;if(s.kpis[id].tgt!=null)k.tgt=s.kpis[id].tgt;}}}
+  if(Array.isArray(s.approved))approved=new Set(s.approved);
+  if(Array.isArray(s.tasks))tasksDone=new Set(s.tasks);
+  if(s.liMom&&typeof s.liMom==='object')liMomState=s.liMom;
+  if(s.blogEdits&&typeof s.blogEdits==='object')blogEdits=s.blogEdits;
+  if(s.postDrafts&&typeof s.postDrafts==='object')postDrafts=s.postDrafts;
+}
 async function loadState(){
-  try{
-    const r=await fetch('/api/state');
-    if(!r.ok) throw new Error();
-    const s=await r.json();
-    if(s.kpis){for(const id in s.kpis){const k=findKpi(id);if(k){if(s.kpis[id].cur!=null)k.cur=s.kpis[id].cur;if(s.kpis[id].tgt!=null)k.tgt=s.kpis[id].tgt;}}}
-    if(Array.isArray(s.approved))approved=new Set(s.approved);
-    if(Array.isArray(s.tasks))tasksDone=new Set(s.tasks);
-    if(s.liMom&&typeof s.liMom==='object')liMomState=s.liMom;
-    if(s.blogEdits&&typeof s.blogEdits==='object')blogEdits=s.blogEdits;
-    if(s.postDrafts&&typeof s.postDrafts==='object')postDrafts=s.postDrafts;
-    online=true;setSave('saved');
-  }catch(e){online=false;setSave('offline');}
+  // Saved in the browser, like Novograf. This survives Render spin downs.
+  let s=null;
+  try{const raw=localStorage.getItem(LS_KEY);if(raw)s=JSON.parse(raw);}catch(e){}
+  if(!s){
+    // one time pull of anything saved on the server before the switch
+    try{
+      const r=await fetch('/api/state');
+      if(r.ok){const srv=await r.json();
+        const has=srv&&((srv.kpis&&Object.keys(srv.kpis).length)||(srv.tasks&&srv.tasks.length)||(srv.approved&&srv.approved.length)||(srv.blogEdits&&Object.keys(srv.blogEdits).length)||(srv.postDrafts&&Object.keys(srv.postDrafts).length));
+        if(has)s=srv;
+      }
+    }catch(e){}
+  }
+  applyState(s);
+  online=true;setSave('saved');
 }
 function buildPayload(){
   const kpis={};
   allKpis().forEach(k=>kpis[k.id]={cur:k.cur,tgt:k.tgt});
   return {kpis,approved:[...approved],tasks:[...tasksDone],liMom:liMomState,blogEdits:blogEdits,postDrafts:postDrafts};
 }
-async function persist(){
-  if(!online){setSave('offline');return;}
+function persist(){
   setSave('saving');
-  try{
-    const r=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildPayload())});
-    if(!r.ok)throw new Error();
-    setSave('saved');
-  }catch(e){online=false;setSave('offline');}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(buildPayload()));setSave('saved');}
+  catch(e){setSave('offline');}
 }
 
 /* ---------------- KPI render ---------------- */
