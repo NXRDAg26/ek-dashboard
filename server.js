@@ -33,7 +33,7 @@ const DATA_FILE = path.join(__dirname, 'state.json');
 app.use(express.json({ limit: '1mb' }));
 
 /* ---------- saved figures and approvals ---------- */
-function defaultState() { return { kpis: {}, approved: [], tasks: [], liMom: {} }; }
+function defaultState() { return { kpis: {}, approved: [], tasks: [], liMom: {}, blogEdits: {} }; }
 function readState() {
   try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
   catch (e) { return defaultState(); }
@@ -523,7 +523,8 @@ app.post('/api/state', (req, res) => {
     kpis: body.kpis && typeof body.kpis === 'object' ? body.kpis : {},
     approved: Array.isArray(body.approved) ? body.approved : [],
     tasks: Array.isArray(body.tasks) ? body.tasks : [],
-    liMom: body.liMom && typeof body.liMom === 'object' ? body.liMom : {}
+    liMom: body.liMom && typeof body.liMom === 'object' ? body.liMom : {},
+    blogEdits: body.blogEdits && typeof body.blogEdits === 'object' ? body.blogEdits : {}
   };
   try { writeState(state); res.json({ ok: true }); }
   catch (e) { res.status(500).json({ ok: false, error: 'Could not save state' }); }
